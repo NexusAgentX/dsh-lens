@@ -8,6 +8,8 @@ import type {} from '@deepseek-ai/dsh-tools'
 import { registerLensCommands } from './commands.js'
 import { registerLifecycle } from './hooks.js'
 import { logger } from './logger.js'
+import { registerLensProjection } from './projection.js'
+import type {} from './types.js'
 import { registerLensPrompt } from './prompt.js'
 import { createRuntime, stopRuntime } from './runtime.js'
 import { registerLensSkills } from './skills.js'
@@ -45,6 +47,7 @@ export async function apply(ctx: Context, config: Config = {}): Promise<void> {
   registerLensCommands(ctx, state)
   registerLensPrompt(ctx)
   registerLensSkills(ctx)
+  registerLensProjection(ctx, state)
   registerLifecycle(ctx, state)
 
   void state.started.then(() => {

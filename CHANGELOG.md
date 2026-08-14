@@ -7,6 +7,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.2.0] - 2026-08-14
+
+### Added
+
+- WebUI diagnostics chip and dock via the official `lens` session projection.
+- Search-card presentation for diagnostics / ast-grep / symbol search.
+- `/lens-widget-toggle` now shows or hides the WebUI widget.
+
 ## [0.1.0] - 2026-08-14
 
 ### Added

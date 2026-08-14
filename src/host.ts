@@ -3,6 +3,7 @@ import { createMcpHost } from 'pi-lens/dist/clients/mcp/host-shim.js'
 export interface LensFlags {
   enabled: boolean
   contextInjection: boolean
+  widgetVisible: boolean
 }
 
 export function createFlagResolver(

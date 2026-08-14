@@ -12,13 +12,14 @@ describe('dsh-lens package', () => {
     const pkg = JSON.parse(readFileSync(join(pkgRoot, 'package.json'), 'utf8')) as {
       name: string
       publishConfig?: { access?: string }
-      dsh?: { bundle?: { patch?: string } }
+      dsh?: { bundle?: { patch?: string }; client?: { platform?: string } }
       dependencies?: { 'pi-lens'?: string }
     }
     assert.equal(pkg.name, 'dsh-lens')
     assert.equal(pkg.publishConfig?.access, 'public')
     assert.equal(pkg.dsh?.bundle?.patch, './cordis.patch.yml')
     assert.ok(pkg.dependencies?.['pi-lens'])
+    assert.equal(pkg.dsh?.client?.platform, 'web')
   })
 
   it('exports a Cordis plugin entry', async () => {

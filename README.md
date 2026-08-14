@@ -55,7 +55,17 @@ The official `lsp` tool is left alone. Use it for simple go-to; use `lsp_navigat
 
 `/lens-toggle` · `/lens-context-toggle` · `/lens-health` · `/lens-perf` · `/lens-tools` · `/lens-tdi` · `/lens-map` · `/lens-allow-edit <path>`
 
-`/lens-widget-toggle` explains that dsh has no Pi footer widget. Use `/lens-health` instead.
+`/lens-widget-toggle` shows or hides the WebUI widget.
+
+## WebUI
+
+On the official dsh web profile the plugin ships a browser half (`dsh.client`):
+
+- session header chip (`conversation.session.header.actions`) with counts and a popover of blockers
+- composer dock strip (`conversation.input.dock`)
+- search cards for `lens_diagnostics` / `ast_grep_search` / `symbol_search`
+
+The chip reads the `lens` session projection, folded from widget-state on `tool/result`, `turn/end`, and `/lens-widget-toggle`. It does **not** append a custom session event, so persistence will not reject the log.
 
 ## Config
 

@@ -34,6 +34,7 @@ export function createRuntime(options: RuntimeOptions = {}): LensRuntime {
   const flags: LensFlags = {
     enabled: options.enabled !== false,
     contextInjection: options.contextInjection !== false,
+    widgetVisible: true,
   }
   const coordinator = new RuntimeCoordinator()
   coordinator.projectRoot = projectRoot

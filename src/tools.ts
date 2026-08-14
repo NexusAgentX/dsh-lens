@@ -1,4 +1,5 @@
 import type { Context } from '@deepseek-ai/cordis'
+import type { ToolDefinition } from '@deepseek-ai/dsh-tools'
 import type {} from '@deepseek-ai/dsh-tools'
 import { createAstGrepDumpTool } from 'pi-lens/dist/tools/ast-dump.js'
 import { createAstGrepOutlineTool } from 'pi-lens/dist/tools/ast-grep-outline.js'
@@ -17,7 +18,8 @@ import {
 import { createProjectReportTool } from 'pi-lens/dist/tools/project-report.js'
 import { createSymbolSearchTool } from 'pi-lens/dist/tools/symbol-search.js'
 import { flushDebouncedToolResults } from 'pi-lens/dist/clients/runtime-tool-result.js'
-import { extractResultText, jsonSafe, resolveFilePath, asRecord } from './events.js'
+import { presentLensCall, searchMetaFromValue } from './cards.js'
+import { extractResultText, jsonSafe, asRecord } from './events.js'
 import { logger } from './logger.js'
 import type { LensRuntime } from './runtime.js'
 import { toJsonSchema } from './schema.js'
@@ -107,42 +109,26 @@ export function createPiTools(state: LensRuntime): PiTool[] {
   return [...alwaysActive, activate, ...lazy]
 }
 
-export function wrapPiTool(tool: PiTool): {
-  name: string
-  description: string
-  parameters: Record<string, unknown>
-  output: {
-    schema: Record<string, unknown>
-    render: (args: unknown, value: unknown) => Array<{ type: 'text'; text: string }>
-  }
-  presentCall: (args: unknown) => { card: 'generic'; title: string; kind: 'search' | 'read' | 'other'; locations?: Array<{ path: string }> }
-  timeoutMs: number
-  execute: (args: unknown, exec: { signal: AbortSignal; token?: unknown }) => Promise<unknown>
-} {
-  return {
+export function wrapPiTool(tool: PiTool): ToolDefinition {
+  const definition = {
     name: tool.name.slice(0, 64),
     description: tool.description,
     parameters: toJsonSchema(tool.parameters),
     output: {
       schema: { type: 'json' },
-      render: (_args, value) => [{ type: 'text', text: extractResultText(value) }],
+      render: (_args: unknown, value: unknown) => [{ type: 'text', text: extractResultText(value) }],
+      presentationMeta: (args: unknown, value: unknown) => searchMetaFromValue(tool.name, args, value) ?? null,
     },
-    presentCall(args) {
-      const path = resolveFilePath(asRecord(args))
-      const kind = tool.name.includes('search') || tool.name.includes('diagnostics')
-        ? 'search'
-        : tool.name.startsWith('read') || tool.name.includes('report')
-          ? 'read'
-          : 'other'
-      return {
-        card: 'generic',
-        title: tool.label ?? tool.name,
-        kind,
-        ...path ? { locations: [{ path }] } : {},
-      }
+    presentCall(args: unknown) {
+      return presentLensCall(tool.name, tool.label, args)
+    },
+    presentResult(args: unknown, result: { meta?: unknown }) {
+      const meta = searchMetaFromValue(tool.name, args, result.meta) ?? searchMetaFromValue(tool.name, args, result)
+      if (meta) return meta
+      return { card: 'generic', title: tool.label ?? tool.name }
     },
     timeoutMs: 180_000,
-    async execute(args, exec) {
+    async execute(args: unknown, exec: { signal: AbortSignal; token?: unknown }) {
       const result = await tool.execute(
         String(exec.token ?? tool.name),
         asRecord(args),
@@ -154,6 +140,7 @@ export function wrapPiTool(tool: PiTool): {
       return jsonSafe({ text, details: result.details ?? null })
     },
   }
+  return definition as ToolDefinition
 }
 
 export function registerLensTools(ctx: Context, state: LensRuntime): void {

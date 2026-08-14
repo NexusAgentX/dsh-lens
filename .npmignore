@@ -2,6 +2,7 @@
 src/
 test/
 dist/test/
+dist/client.body.cjs
 tsconfig.json
 *.tgz
 .env

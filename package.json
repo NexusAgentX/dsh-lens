@@ -1,6 +1,6 @@
 {
   "name": "dsh-lens",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "description": "Real-time code feedback for DeepSeek Harness — LSP, linters, formatters, type-checking, and structural analysis.",
   "type": "module",
   "main": "./dist/index.js",
@@ -11,7 +11,15 @@
       "import": "./dist/index.js",
       "default": "./dist/index.js"
     },
-    "./package.json": "./package.json"
+    "./package.json": "./package.json",
+    "./client": {
+      "default": "./dist/client.js"
+    },
+    "./types": {
+      "types": "./dist/types.d.ts",
+      "import": "./dist/types.js",
+      "default": "./dist/types.js"
+    }
   },
   "bin": {
     "dsh-lens": "./dist/cli.js"
@@ -26,10 +34,17 @@
   "dsh": {
     "bundle": {
       "patch": "./cordis.patch.yml"
+    },
+    "client": {
+      "platform": "web",
+      "inject": [
+        "@deepseek-ai/dsh-client-runtime",
+        "@deepseek-ai/dsh-client-ui-conversation"
+      ]
     }
   },
   "scripts": {
-    "build": "tsc -p tsconfig.json",
+    "build": "tsc -p tsconfig.json && node scripts/bundle-client.mjs",
     "typecheck": "tsc -p tsconfig.json --noEmit",
     "test": "npm run build && node --test --test-reporter=spec dist/test/*.test.js",
     "prepack": "npm run build && node --test --test-reporter=spec dist/test/*.test.js"
@@ -48,7 +63,8 @@
     "tree-sitter",
     "code-quality",
     "ai",
-    "coding-agent"
+    "coding-agent",
+    "webui"
   ],
   "license": "MIT",
   "author": "NexusAgentX",
@@ -64,13 +80,15 @@
     "access": "public"
   },
   "dependencies": {
-    "pi-lens": "^3.8.74"
+    "pi-lens": "^3.8.74",
+    "zod": "^4.4.3"
   },
   "peerDependencies": {
     "@deepseek-ai/cordis": "^4.0.1",
     "@deepseek-ai/dsh-agent": "^0.0.1-rc.1",
     "@deepseek-ai/dsh-commands": "^0.0.1-rc.1",
     "@deepseek-ai/dsh-llm": "^0.0.1-rc.1",
+    "@deepseek-ai/dsh-session-projection": "^0.0.1-rc.1",
     "@deepseek-ai/dsh-skill": "^0.0.1-rc.1",
     "@deepseek-ai/dsh-system-prompt": "^0.0.1-rc.1",
     "@deepseek-ai/dsh-tools": "^0.0.1-rc.1",
@@ -81,6 +99,9 @@
       "optional": true
     },
     "@deepseek-ai/dsh-commands": {
+      "optional": true
+    },
+    "@deepseek-ai/dsh-session-projection": {
       "optional": true
     },
     "@deepseek-ai/dsh-skill": {
@@ -95,14 +116,19 @@
     "@deepseek-ai/dsh-agent": "^0.0.1-rc.1",
     "@deepseek-ai/dsh-commands": "^0.0.1-rc.1",
     "@deepseek-ai/dsh-llm": "^0.0.1-rc.1",
+    "@deepseek-ai/dsh-session-projection": "^0.0.1-rc.1",
     "@deepseek-ai/dsh-skill": "^0.0.1-rc.1",
     "@deepseek-ai/dsh-system-prompt": "^0.0.1-rc.1",
     "@deepseek-ai/dsh-tools": "^0.0.1-rc.1",
     "@deepseek-ai/schemastery": "^3.18.1",
     "@types/node": "^22.15.0",
+    "@types/react": "^18.3.1",
+    "esbuild": "^0.25.0",
+    "react": "^18.2.0",
     "typescript": "^5.9.3"
   },
   "allowScripts": {
-    "@ast-grep/cli@0.45.1": true
+    "@ast-grep/cli@0.45.1": true,
+    "esbuild@0.25.12": true
   }
 }

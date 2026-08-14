@@ -172,6 +172,21 @@ declare module 'pi-lens/dist/tools/lens-diagnostic-mark.js' {
   export function createLensDiagnosticMarkTool(...args: unknown[]): PiLensTool
 }
 
+declare module 'pi-lens/dist/clients/widget-state.js' {
+  export function exportWidgetState(): {
+    sessionLanguages?: string[]
+    files?: Array<{
+      filePath: string
+      touchedAt?: number
+      diagnosticCounts?: { blocking?: number; errors?: number; warnings?: number }
+      allDiagnostics?: Array<{ semantic?: string; severity?: string; line?: number; rule?: string; message?: string }>
+      diagnostics?: Array<{ semantic?: string; severity?: string; line?: number; rule?: string; message?: string }>
+    }>
+  }
+  export function getSessionLanguages(): string[]
+  export function getFailedLspServerIds(): string[]
+}
+
 declare module 'pi-lens/dist/tools/activate-tools.js' {
   export function createActivateToolsTool(...args: unknown[]): PiLensTool
 }

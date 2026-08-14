@@ -21,10 +21,10 @@ describe('dsh-lens tool wrapper', () => {
     })
 
     assert.equal(wrapped.name, 'lens_diagnostics')
-    const value = await wrapped.execute({ mode: 'all' }, { signal: new AbortController().signal, token: 't1' })
+    assert.equal(wrapped.presentCall?.({ file_path: 'src/a.ts' })?.card, 'generic')
+    const value = await wrapped.execute({ mode: 'all' }, fakeExec())
     assert.deepEqual(value, { text: 'mode=all', details: { mode: 'all' } })
     assert.deepEqual(wrapped.output.render({}, value), [{ type: 'text', text: 'mode=all' }])
-    assert.equal(wrapped.presentCall({ file_path: 'src/a.ts' }).card, 'generic')
   })
 
   it('throws when the upstream tool reports isError', async () => {
@@ -35,9 +35,15 @@ describe('dsh-lens tool wrapper', () => {
         return { content: [{ type: 'text', text: 'bad pattern' }], isError: true }
       },
     })
-    await assert.rejects(
-      () => wrapped.execute({}, { signal: new AbortController().signal }),
-      /bad pattern/,
-    )
+    await assert.rejects(() => wrapped.execute({}, fakeExec()), /bad pattern/)
   })
 })
+
+function fakeExec(): any {
+  return {
+    signal: new AbortController().signal,
+    token: Symbol('test'),
+    deferContext() {},
+    concludeTurn() {},
+  }
+}

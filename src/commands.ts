@@ -53,9 +53,12 @@ export function registerLensCommands(ctx: Context, state: LensRuntime): void {
       : 'dsh-lens context injection disabled — findings stay cached (lens_diagnostics, /lens-health).')
   })
 
-  add('lens-widget-toggle', 'Explain the diagnostics widget status on dsh', () => ok(
-    'dsh has no Pi-style footer widget. Use /lens-health, /lens-tdi, or the lens_diagnostics tool instead.',
-  ))
+  add('lens-widget-toggle', 'Show or hide the WebUI lens diagnostics chip', () => {
+    state.flags.widgetVisible = !state.flags.widgetVisible
+    return ok(state.flags.widgetVisible
+      ? 'dsh-lens widget shown in the WebUI session header / dock.'
+      : 'dsh-lens widget hidden. Run /lens-widget-toggle again to show it.')
+  })
 
   add('lens-tdi', 'Show Technical Debt Index and project health trend', async () => {
     try {
