@@ -22,7 +22,7 @@ import { presentLensCall, searchMetaFromValue } from './cards.js'
 import { extractResultText, jsonSafe, asRecord } from './events.js'
 import { logger } from './logger.js'
 import type { LensRuntime } from './runtime.js'
-import { toJsonSchema } from './schema.js'
+import { TOOL_OUTPUT_SCHEMA, toJsonSchema } from './schema.js'
 
 interface PiTool {
   name: string
@@ -115,7 +115,7 @@ export function wrapPiTool(tool: PiTool): ToolDefinition {
     description: tool.description,
     parameters: toJsonSchema(tool.parameters),
     output: {
-      schema: { type: 'json' },
+      schema: TOOL_OUTPUT_SCHEMA,
       render: (_args: unknown, value: unknown) => [{ type: 'text', text: extractResultText(value) }],
       presentationMeta: (args: unknown, value: unknown) => searchMetaFromValue(tool.name, args, value) ?? null,
     },

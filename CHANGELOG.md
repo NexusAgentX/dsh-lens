@@ -7,6 +7,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.2.3] - 2026-08-14
+
+### Fixed
+
+- Register tools with a real JSON Schema output (`text` + unconstrained `details`) instead of `{ type: 'json' }`, which `tools.register` rejects.
+- Normalize pi-lens parameter schemas onto the dsh subset (`anyOf` → `oneOf`, drop `minItems`/`maxItems`/empty `enum`).
+
 ## [0.2.2] - 2026-08-14
 
 ### Fixed
