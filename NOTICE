@@ -4,11 +4,11 @@ Copyright (c) 2026 NexusAgentX
 This project is an independent DeepSeek Harness plugin. It is not affiliated
 with DeepSeek AI.
 
-The product contract — on-write diagnostics, language-aware format/autofix,
-structural search, and agent-facing code intelligence — is inspired by
-pi-lens:
+The analysis engine, language runners, rules, grammars, and agent-facing tool
+implementations come from pi-lens:
 
   https://github.com/apmantza/pi-lens
 
-pi-lens is MIT-licensed. See that repository for its copyright holders
-and license text.
+This repository is a host adapter: it maps DeepSeek Harness lifecycle events,
+tools, and commands onto that engine. pi-lens is MIT-licensed. See that
+repository for its copyright holders and license text.

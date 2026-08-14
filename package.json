@@ -1,25 +1,23 @@
 {
   "name": "dsh-lens",
-  "version": "0.0.1",
+  "version": "0.1.0",
   "description": "Real-time code feedback for DeepSeek Harness — LSP, linters, formatters, type-checking, and structural analysis.",
   "type": "module",
-  "main": "./index.js",
-  "types": "./index.d.ts",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
   "exports": {
     ".": {
-      "types": "./index.d.ts",
-      "import": "./index.js",
-      "default": "./index.js"
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js",
+      "default": "./dist/index.js"
     },
     "./package.json": "./package.json"
   },
   "bin": {
-    "dsh-lens": "./cli.js"
+    "dsh-lens": "./dist/cli.js"
   },
   "files": [
-    "index.js",
-    "index.d.ts",
-    "cli.js",
+    "dist",
     "cordis.patch.yml",
     "README.md",
     "LICENSE",
@@ -31,8 +29,10 @@
     }
   },
   "scripts": {
-    "test": "node --test test/*.test.js",
-    "prepack": "node --test test/*.test.js"
+    "build": "tsc -p tsconfig.json",
+    "typecheck": "tsc -p tsconfig.json --noEmit",
+    "test": "npm run build && node --test --test-reporter=spec dist/test/*.test.js",
+    "prepack": "npm run build && node --test --test-reporter=spec dist/test/*.test.js"
   },
   "engines": {
     "node": ">=20"
@@ -62,5 +62,47 @@
   "homepage": "https://github.com/NexusAgentX/dsh-lens#readme",
   "publishConfig": {
     "access": "public"
+  },
+  "dependencies": {
+    "pi-lens": "^3.8.74"
+  },
+  "peerDependencies": {
+    "@deepseek-ai/cordis": "^4.0.1",
+    "@deepseek-ai/dsh-agent": "^0.0.1-rc.1",
+    "@deepseek-ai/dsh-commands": "^0.0.1-rc.1",
+    "@deepseek-ai/dsh-llm": "^0.0.1-rc.1",
+    "@deepseek-ai/dsh-skill": "^0.0.1-rc.1",
+    "@deepseek-ai/dsh-system-prompt": "^0.0.1-rc.1",
+    "@deepseek-ai/dsh-tools": "^0.0.1-rc.1",
+    "@deepseek-ai/schemastery": "^3.18.1"
+  },
+  "peerDependenciesMeta": {
+    "@deepseek-ai/dsh-agent": {
+      "optional": true
+    },
+    "@deepseek-ai/dsh-commands": {
+      "optional": true
+    },
+    "@deepseek-ai/dsh-skill": {
+      "optional": true
+    },
+    "@deepseek-ai/dsh-system-prompt": {
+      "optional": true
+    }
+  },
+  "devDependencies": {
+    "@deepseek-ai/cordis": "^4.0.1",
+    "@deepseek-ai/dsh-agent": "^0.0.1-rc.1",
+    "@deepseek-ai/dsh-commands": "^0.0.1-rc.1",
+    "@deepseek-ai/dsh-llm": "^0.0.1-rc.1",
+    "@deepseek-ai/dsh-skill": "^0.0.1-rc.1",
+    "@deepseek-ai/dsh-system-prompt": "^0.0.1-rc.1",
+    "@deepseek-ai/dsh-tools": "^0.0.1-rc.1",
+    "@deepseek-ai/schemastery": "^3.18.1",
+    "@types/node": "^22.15.0",
+    "typescript": "^5.9.3"
+  },
+  "allowScripts": {
+    "@ast-grep/cli@0.45.1": true
   }
 }

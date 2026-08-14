@@ -2,28 +2,21 @@
 
 Real-time code feedback for [DeepSeek Harness](https://github.com/deepseek-ai/deepseek-harness): LSP, linters, formatters, type-checking, and structural analysis while the agent writes.
 
-`0.0.1` is a **name reservation + installable bundle stub**. The host-native pipeline lands next.
-
 English | [中文](#中文)
 
-## Why this exists
+## What it does
 
-[pi-lens](https://github.com/apmantza/pi-lens) already solved the product: on every write/edit it runs format/autofix, LSP, ast-grep, tree-sitter, and language-specific scanners, then injects blockers into the next turn. The engine is host-neutral (`clients/lens-engine.ts`). Pi coupling lives in `index.ts`; there is already a second host adapter as `pi-lens-mcp`.
+This is a host-native port of [pi-lens](https://github.com/apmantza/pi-lens). The analysis engine stays in `pi-lens`; this plugin is the DeepSeek Harness adapter.
 
-DeepSeek Harness has official [`dsh-tool-lsp`](https://github.com/deepseek-ai/deepseek-harness/tree/master/packages/lsp/tool-lsp), but that is a **pull** navigation tool (`goToDefinition` / `findReferences` / `hover`). It does not run the on-write pipeline, does not inject diagnostics, and does not cover linters / formatters / structural rules.
+On every `write` / `edit` / `bash` mutation it runs the same pipeline pi-lens uses inside Pi:
 
-This plugin ports the pi-lens **product contract** onto dsh. It does **not** fork the Pi host layer, and it does **not** replace the official `lsp` tool.
+1. format queue / safe autofix
+2. LSP file sync and diagnostics
+3. ast-grep, tree-sitter, fact rules, and language scanners
+4. cascade diagnostics on likely neighbors
+5. turn-end blockers and advisories injected into the next model request
 
-## Status
-
-| Piece | 0.0.1 |
-|---|---|
-| npm name `dsh-lens` | reserved |
-| `dsh plugin add` bundle stub | yes |
-| write/edit pipeline (`tools/before` + `tools/result`) | not yet |
-| turn-end diagnostic injection | not yet |
-| agent tools (`lens_diagnostics`, ast-grep, symbol search) | not yet |
-| `/lens` status command | not yet |
+It also registers the full agent-facing tool set and the `/lens-*` commands.
 
 ## Install
 
@@ -31,17 +24,60 @@ This plugin ports the pi-lens **product contract** onto dsh. It does **not** for
 dsh plugin --profile web add dsh-lens
 ```
 
-The stub loads and prints a placeholder log line. It does not analyze code yet.
+Or from git:
 
-## Planned shape
+```sh
+dsh plugin --profile web add github:NexusAgentX/dsh-lens
+```
 
-- a Cordis bundle that calls the host-neutral lens engine
-- hook `tools/before` / `tools/result` for write/edit, `turn/end` for blockers
-- inject findings through `ctx.systemPrompt` / additional context, not a second `lsp` tool
-- keep official `lsp` for navigation; add lens-only tools (`lens_diagnostics`, `ast_grep_search`, `symbol_search`)
-- reuse `.pi-lens.json` / `~/.pi-lens/config.json` so existing project config still works
+Do **not** also attach `pi-lens-mcp` / official MCP-wrapped pi-lens against the same workspace — that double-starts language servers.
 
-It is an independent plugin. It is not affiliated with DeepSeek AI.
+## Tools
+
+Always available:
+
+- `lens_diagnostics` — cached / project diagnostic state (`delta` / `all` / `full`)
+- `lsp_diagnostics` — file- or directory-scoped LSP diagnostics
+- `symbol_search` — ranked identifier search
+- `module_report` / `project_report`
+- `read_symbol` / `read_enclosing`
+
+Also registered (dsh has no dynamic-tool API, so they stay visible):
+
+- `ast_grep_search` / `ast_grep_replace` / `ast_grep_outline` / `ast_grep_dump`
+- `lsp_navigation`
+- `lens_diagnostic_mark`
+- `pi_lens_activate_tools` — no-op catalog on dsh; all tools are already active
+
+The official `lsp` tool is left alone. Use it for simple go-to; use `lsp_navigation` for the full IDE surface.
+
+## Commands
+
+`/lens-toggle` · `/lens-context-toggle` · `/lens-health` · `/lens-perf` · `/lens-tools` · `/lens-tdi` · `/lens-map` · `/lens-allow-edit <path>`
+
+`/lens-widget-toggle` explains that dsh has no Pi footer widget. Use `/lens-health` instead.
+
+## Config
+
+Same files as pi-lens:
+
+- project: `.pi-lens.json`
+- global: `~/.pi-lens/config.json`
+
+Plugin config on the Cordis entry:
+
+```yaml
+- id: dsh-lens
+  name: dsh-lens
+  config:
+    cwd: /path/to/workspace   # optional; defaults to process cwd / session header.cwd
+    enabled: true
+    contextInjection: true
+```
+
+## Host limits (honest)
+
+dsh freezes tool arguments before dispatch, so Pi's in-flight edit autopatch (indent retarget / partial apply) cannot rewrite `old_string`. dsh already has its own read-before-edit observation policy. Everything else — on-write pipeline, format/autofix on disk, blockers, tools, commands, skills — is live.
 
 ## License
 
@@ -53,9 +89,7 @@ Inspired by [pi-lens](https://github.com/apmantza/pi-lens) (MIT). See [NOTICE](N
 
 ## 中文
 
-给 [DeepSeek Harness](https://github.com/deepseek-ai/deepseek-harness) 用的实时代码反馈插件：写文件时跑 LSP / linter / formatter / 结构规则，并把 blocker 注回下一轮。
-
-`0.0.1` 只抢注 npm 名并提供可安装的 bundle 占位。实现随后补上。
+给 DeepSeek Harness 用的实时代码反馈插件。分析引擎还是 [pi-lens](https://github.com/apmantza/pi-lens)，这里是 dsh 宿主适配：写文件后跑 format / LSP / linter / 结构规则，并把 blocker 注回下一轮。
 
 ```sh
 dsh plugin --profile web add dsh-lens

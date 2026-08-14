@@ -1,0 +1,10 @@
+export const name = 'dsh-lens'
+export { apply, Config } from './plugin.js'
+export type { Config as PluginConfig } from './plugin.js'
+
+export { normalizeToolEvent, normalizeToolInput, resolveFilePath } from './events.js'
+export { wrapPiTool, createPiTools } from './tools.js'
+export { createRuntime, stopRuntime } from './runtime.js'
+export type { LensRuntime } from './runtime.js'
+export { listBundledSkills, resolvePiLensRoot } from './skills.js'
+export { toJsonSchema } from './schema.js'

@@ -1,5 +1,7 @@
 .github/
+src/
 test/
+tsconfig.json
 *.tgz
 .env
 .env.*
@@ -10,3 +12,4 @@ npm-debug.log*
 coverage/
 .git/
 .gitignore
+CHANGELOG.md
