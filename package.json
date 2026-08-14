@@ -1,0 +1,66 @@
+{
+  "name": "dsh-lens",
+  "version": "0.0.1",
+  "description": "Real-time code feedback for DeepSeek Harness — LSP, linters, formatters, type-checking, and structural analysis.",
+  "type": "module",
+  "main": "./index.js",
+  "types": "./index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./index.d.ts",
+      "import": "./index.js",
+      "default": "./index.js"
+    },
+    "./package.json": "./package.json"
+  },
+  "bin": {
+    "dsh-lens": "./cli.js"
+  },
+  "files": [
+    "index.js",
+    "index.d.ts",
+    "cli.js",
+    "cordis.patch.yml",
+    "README.md",
+    "LICENSE",
+    "NOTICE"
+  ],
+  "dsh": {
+    "bundle": {
+      "patch": "./cordis.patch.yml"
+    }
+  },
+  "scripts": {
+    "test": "node --test test/*.test.js",
+    "prepack": "node --test test/*.test.js"
+  },
+  "engines": {
+    "node": ">=20"
+  },
+  "keywords": [
+    "dsh",
+    "dsh-plugin",
+    "deepseek-harness",
+    "lsp",
+    "linter",
+    "formatter",
+    "ast-grep",
+    "tree-sitter",
+    "code-quality",
+    "ai",
+    "coding-agent"
+  ],
+  "license": "MIT",
+  "author": "NexusAgentX",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/NexusAgentX/dsh-lens.git"
+  },
+  "bugs": {
+    "url": "https://github.com/NexusAgentX/dsh-lens/issues"
+  },
+  "homepage": "https://github.com/NexusAgentX/dsh-lens#readme",
+  "publishConfig": {
+    "access": "public"
+  }
+}

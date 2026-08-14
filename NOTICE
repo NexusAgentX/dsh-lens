@@ -1,0 +1,14 @@
+dsh-lens
+Copyright (c) 2026 NexusAgentX
+
+This project is an independent DeepSeek Harness plugin. It is not affiliated
+with DeepSeek AI.
+
+The product contract — on-write diagnostics, language-aware format/autofix,
+structural search, and agent-facing code intelligence — is inspired by
+pi-lens:
+
+  https://github.com/apmantza/pi-lens
+
+pi-lens is MIT-licensed. See that repository for its copyright holders
+and license text.
