@@ -27,6 +27,7 @@ export function registerLifecycle(ctx: Context, state: LensRuntime): void {
     if (!state.flags.enabled || !OBSERVED_TOOLS.has(exec.name)) return next()
     await state.started
     const cwd = sessionCwd(exec.agent, state.projectRoot)
+    state.sessionCwd = cwd
     const event = normalizeToolEvent(exec.name, exec.arguments)
     try {
       const decision = await handleToolCall({

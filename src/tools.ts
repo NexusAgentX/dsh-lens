@@ -22,6 +22,7 @@ import { presentLensCall, searchMetaFromValue } from './cards.js'
 import { extractResultText, jsonSafe, asRecord } from './events.js'
 import { logger } from './logger.js'
 import type { LensRuntime } from './runtime.js'
+import { sessionCwd } from './context.js'
 import { TOOL_OUTPUT_SCHEMA, toJsonSchema } from './schema.js'
 
 interface PiTool {
@@ -34,6 +35,7 @@ interface PiTool {
     params: Record<string, unknown>,
     signal: AbortSignal | undefined,
     onUpdate: unknown,
+    ctx?: { cwd?: string; signal?: AbortSignal },
   ): Promise<{
     content?: Array<{ type: string; text?: string }>
     isError?: boolean
@@ -51,7 +53,7 @@ const LAZY_TOOL_CATALOG = [
 ]
 
 export function createPiTools(state: LensRuntime): PiTool[] {
-  const getRoot = () => state.projectRoot
+  const getRoot = () => state.sessionCwd ?? state.projectRoot
   const alwaysActive: PiTool[] = [
     createLensDiagnosticsTool(
       state.cacheManager,
@@ -109,7 +111,7 @@ export function createPiTools(state: LensRuntime): PiTool[] {
   return [...alwaysActive, activate, ...lazy]
 }
 
-export function wrapPiTool(tool: PiTool): ToolDefinition {
+export function wrapPiTool(tool: PiTool, state?: LensRuntime): ToolDefinition {
   const definition = {
     name: tool.name.slice(0, 64),
     description: tool.description,
@@ -128,12 +130,15 @@ export function wrapPiTool(tool: PiTool): ToolDefinition {
       return { card: 'generic', title: tool.label ?? tool.name }
     },
     timeoutMs: 180_000,
-    async execute(args: unknown, exec: { signal: AbortSignal; token?: unknown }) {
+    async execute(args: unknown, exec: { signal: AbortSignal; token?: unknown; agent?: { session?: { header?: { cwd?: unknown } } } }) {
+      const cwd = sessionCwd(exec.agent, state?.sessionCwd ?? state?.projectRoot ?? process.cwd())
+      if (state) state.sessionCwd = cwd
       const result = await tool.execute(
         String(exec.token ?? tool.name),
         asRecord(args),
         exec.signal,
         undefined,
+        { cwd, signal: exec.signal },
       )
       const text = (result.content ?? []).map(block => block.text ?? '').join('\n')
       if (result.isError) throw new Error(text || `${tool.name} failed`)
@@ -146,7 +151,7 @@ export function wrapPiTool(tool: PiTool): ToolDefinition {
 export function registerLensTools(ctx: Context, state: LensRuntime): void {
   for (const tool of createPiTools(state)) {
     try {
-      ctx.tools.register(wrapPiTool(tool))
+      ctx.tools.register(wrapPiTool(tool, state))
     } catch (error) {
       logger.warn(`skipped tool ${tool.name}: ${error instanceof Error ? error.message : String(error)}`)
     }

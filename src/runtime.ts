@@ -21,6 +21,8 @@ export interface LensRuntime {
   getFlag: (name: string, filePath?: string) => boolean | string | undefined
   started: Promise<void>
   lastMapPath?: string
+  /** Last session workspace seen on a tool/hook call. */
+  sessionCwd?: string
 }
 
 export interface RuntimeOptions {

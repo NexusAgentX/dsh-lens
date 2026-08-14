@@ -7,6 +7,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.2.5] - 2026-08-14
+
+### Fixed
+
+- Forward `{ cwd, signal }` as the fifth pi-lens tool argument. Without it, `lens_diagnostics` / `lsp_diagnostics` / `module_report` crashed on `ctx.cwd` / `ctx.signal`.
+- Prefer the session workspace over `process.cwd()` so `symbol_search` does not treat the web service home directory as the project root.
+
 ## [0.2.4] - 2026-08-14
 
 ### Fixed

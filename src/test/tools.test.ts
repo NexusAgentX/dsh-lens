@@ -27,6 +27,28 @@ describe('dsh-lens tool wrapper', () => {
     assert.deepEqual(wrapped.output.render({}, value), [{ type: 'text', text: 'mode=all' }])
   })
 
+  it('forwards session cwd and abort signal as the pi-lens ctx argument', async () => {
+    let seen: { cwd?: string; signal?: AbortSignal } | undefined
+    const wrapped = wrapPiTool({
+      name: 'lens_diagnostics',
+      description: 'diag',
+      async execute(_id, _params, _signal, _onUpdate, ctx) {
+        seen = ctx
+        return { content: [{ type: 'text', text: 'ok' }] }
+      },
+    })
+    const signal = new AbortController().signal
+    await wrapped.execute({}, {
+      signal,
+      token: 'call-1',
+      agent: { session: { header: { cwd: '/tmp/project' } } },
+      deferContext() {},
+      concludeTurn() {},
+    } as never)
+    assert.equal(seen?.cwd, '/tmp/project')
+    assert.equal(seen?.signal, signal)
+  })
+
   it('throws when the upstream tool reports isError', async () => {
     const wrapped = wrapPiTool({
       name: 'ast_grep_search',
