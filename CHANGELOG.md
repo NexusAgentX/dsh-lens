@@ -18,7 +18,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Plugin config exposes the full pi-lens flag set (`lsp`, `format`, `guard`, …).
 - `dsh-lens build-graph` delegates to the upstream review-graph CLI.
 - Widget snapshot includes live LSP status and the last `/lens-map` path.
-- Restyled the WebUI chip/dock to the official Jobs primitives (StateDot, chevron, CSS modules, hover/focus).
+- Restyled the WebUI chip/dock to official Jobs/Plan primitives: Menu, Tooltip, StateDot, locale, CSS modules.
 
 ## [0.1.0] - 2026-08-14
 

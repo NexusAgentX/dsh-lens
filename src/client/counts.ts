@@ -1,12 +1,13 @@
 import type { StateDotState } from '@deepseek-ai/dsh-client-ui-primitives'
 import type { LensFileStatus, LensStatus } from '../types.js'
+import { translate, type Translate } from './locales.js'
 
-export function chipLabel(status: LensStatus): string {
-  if (!status.enabled) return 'lens off'
+export function chipLabel(status: LensStatus, t: Translate = translate): string {
+  if (!status.enabled) return t('chip.off')
   if (status.errors > 0 || status.warnings > 0) {
-    return `lens ${status.errors}E${status.warnings > 0 ? ` ${status.warnings}W` : ''}`
+    return t('chip.counts', { errors: status.errors, warnings: status.warnings })
   }
-  return status.files.length > 0 ? 'lens clean' : 'lens'
+  return status.files.length > 0 ? t('chip.clean') : t('chip.idle')
 }
 
 export function fileLabel(path: string): string {
