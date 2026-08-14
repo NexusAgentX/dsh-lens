@@ -39,7 +39,8 @@
       "platform": "web",
       "inject": [
         "@deepseek-ai/dsh-client-runtime",
-        "@deepseek-ai/dsh-client-ui-conversation"
+        "@deepseek-ai/dsh-client-ui-conversation",
+        "@deepseek-ai/dsh-client-ui-primitives"
       ]
     }
   },
@@ -88,6 +89,7 @@
     "@deepseek-ai/dsh-agent": "^0.0.1-rc.1",
     "@deepseek-ai/dsh-commands": "^0.0.1-rc.1",
     "@deepseek-ai/dsh-llm": "^0.0.1-rc.1",
+    "@deepseek-ai/dsh-client-ui-primitives": "^0.0.1-rc.1",
     "@deepseek-ai/dsh-session-projection": "^0.0.1-rc.1",
     "@deepseek-ai/dsh-skill": "^0.0.1-rc.1",
     "@deepseek-ai/dsh-system-prompt": "^0.0.1-rc.1",
@@ -99,6 +101,9 @@
       "optional": true
     },
     "@deepseek-ai/dsh-commands": {
+      "optional": true
+    },
+    "@deepseek-ai/dsh-client-ui-primitives": {
       "optional": true
     },
     "@deepseek-ai/dsh-session-projection": {
@@ -116,6 +121,7 @@
     "@deepseek-ai/dsh-agent": "^0.0.1-rc.1",
     "@deepseek-ai/dsh-commands": "^0.0.1-rc.1",
     "@deepseek-ai/dsh-llm": "^0.0.1-rc.1",
+    "@deepseek-ai/dsh-client-ui-primitives": "^0.0.1-rc.1",
     "@deepseek-ai/dsh-session-projection": "^0.0.1-rc.1",
     "@deepseek-ai/dsh-skill": "^0.0.1-rc.1",
     "@deepseek-ai/dsh-system-prompt": "^0.0.1-rc.1",

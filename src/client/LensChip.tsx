@@ -1,14 +1,34 @@
-import { useState, type CSSProperties, type KeyboardEvent } from 'react'
+import { useEffect, useRef, useState, type KeyboardEvent } from 'react'
+import {
+  IconChevronDownOutline14,
+  IconLinkOutline14,
+  StateDot,
+} from '@deepseek-ai/dsh-client-ui-primitives'
 import type { LensStatus } from '../types.js'
-import { chipLabel, fileLabel, readLensStatus } from './status-view.js'
+import { chipLabel, fileDot, fileKind, fileLabel, openPath, statusDot } from './counts.js'
+import css from './LensChip.module.css'
+import { readLensStatus } from './status-view.js'
 
 interface ChipProps {
   useProjection?: (key: string) => unknown
+  openFile?: (path: string, line?: number) => void
 }
 
-export function LensChip({ useProjection }: ChipProps) {
+export function LensChip({ useProjection, openFile }: ChipProps) {
   const status = readLensStatus(useProjection)
   const [open, setOpen] = useState(false)
+  const rootRef = useRef<HTMLDivElement>(null)
+  const triggerRef = useRef<HTMLButtonElement>(null)
+
+  useEffect(() => {
+    if (!open) return
+    const closeOutside = (event: PointerEvent): void => {
+      if (event.target instanceof Node && !rootRef.current?.contains(event.target)) setOpen(false)
+    }
+    document.addEventListener('pointerdown', closeOutside)
+    return () => document.removeEventListener('pointerdown', closeOutside)
+  }, [open])
+
   if (!status || !status.visible) return null
 
   const label = chipLabel(status)
@@ -18,108 +38,79 @@ export function LensChip({ useProjection }: ChipProps) {
     if (event.key !== 'Escape' || !open) return
     event.preventDefault()
     setOpen(false)
+    triggerRef.current?.focus()
   }
 
   return (
-    <div style={wrap} onKeyDown={onKeyDown}>
+    <div ref={rootRef} className={css.root} onKeyDown={onKeyDown}>
       <button
+        ref={triggerRef}
         type="button"
-        style={hot ? { ...trigger, color: 'var(--dsw-alias-label-danger, #d4534c)' } : trigger}
+        className={`${css.trigger}${hot ? ` ${css.triggerHot}` : ''}`}
         aria-expanded={open}
         aria-label={label}
         onClick={() => setOpen(current => !current)}
       >
-        {label}
+        <StateDot state={statusDot(status)} className={css.triggerDot} />
+        <span className={css.count}>{label}</span>
+        <IconChevronDownOutline14 className={open ? css.triggerOpen : undefined} />
       </button>
-      {open ? <StatusMenu status={status} /> : null}
+      {open ? <StatusMenu status={status} openFile={openFile} /> : null}
     </div>
   )
 }
 
-function StatusMenu({ status }: { status: LensStatus }) {
+function StatusMenu({
+  status,
+  openFile,
+}: {
+  status: LensStatus
+  openFile?: (path: string, line?: number) => void
+}) {
+  const lspLive = status.lsp.filter(item => item.connected).length
   return (
-    <div style={menu} role="dialog" aria-label="dsh-lens diagnostics">
-      <div style={meta}>
+    <div className={css.menu} role="dialog" aria-label="dsh-lens diagnostics">
+      <div className={css.meta}>
         {status.languages.join(' ') || 'no languages yet'}
-        {status.lsp.length > 0 ? ` · LSP ${status.lsp.filter(item => item.connected).length}/${status.lsp.length}` : ''}
+        {status.lsp.length > 0 ? ` · LSP ${lspLive}/${status.lsp.length}` : ''}
         {status.failedLsp.length > 0 ? ` · failed ${status.failedLsp.join(' ')}` : ''}
       </div>
       {status.mapPath
-        ? <a href={status.mapPath} style={mapLink} target="_blank" rel="noreferrer">Open project map</a>
+        ? (
+          <button
+            type="button"
+            className={css.mapRow}
+            onClick={() => openPath(openFile, status.mapPath!)}
+          >
+            <IconLinkOutline14 />
+            Open project map
+          </button>
+        )
         : null}
       {status.files.length === 0
-        ? <div style={row}>No files analyzed this session.</div>
+        ? <div className={css.empty}>No files analyzed this session.</div>
         : status.files.map(file => (
-          <div key={file.path} style={row}>
-            <div style={fileTitle}>
-              {fileLabel(file.path)}
-              <span style={counts}>
-                {file.blocking > 0 ? ` ${file.blocking}B` : ''}
-                {file.errors > 0 ? ` ${file.errors}E` : ''}
-                {file.warnings > 0 ? ` ${file.warnings}W` : ''}
-              </span>
+          <button
+            key={file.path}
+            type="button"
+            className={`${css.row}${openFile ? '' : ` ${css.rowIdle}`}`}
+            title={file.path}
+            onClick={() => openPath(openFile, file.path, file.blockers[0]?.line)}
+          >
+            <div className={css.fileHead}>
+              <StateDot state={fileDot(file)} />
+              <span className={css.label}>{fileLabel(file.path)}</span>
+              <span className={css.kind}>{fileKind(file)}</span>
             </div>
             {file.blockers.map((blocker, index) => (
-              <div key={`${file.path}:${index}`} style={blockerLine}>
+              <div key={`${file.path}:${index}`} className={css.blocker}>
                 {blocker.line != null ? `L${blocker.line} ` : ''}
                 {blocker.rule ? `${blocker.rule} ` : ''}
                 {blocker.message}
               </div>
             ))}
-          </div>
+          </button>
         ))}
     </div>
   )
-}
-
-const wrap: CSSProperties = { position: 'relative', display: 'inline-flex' }
-const trigger: CSSProperties = {
-  minHeight: 28,
-  color: 'var(--dsw-alias-label-tertiary)',
-  cursor: 'pointer',
-  background: 'transparent',
-  border: 0,
-  borderRadius: 6,
-  alignItems: 'center',
-  padding: '3px 6px',
-  fontSize: 12,
-  lineHeight: '18px',
-  display: 'inline-flex',
-}
-const menu: CSSProperties = {
-  zIndex: 100,
-  position: 'absolute',
-  top: 'calc(100% + 5px)',
-  left: 0,
-  width: 360,
-  maxWidth: 'min(400px, 100vw - 32px)',
-  maxHeight: 'min(420px, 100vh - 140px)',
-  overflow: 'auto',
-  background: 'var(--dsw-specific-menu, #1e1e1e)',
-  border: '1px solid var(--dsw-alias-border-l2, #333)',
-  borderRadius: 12,
-  boxShadow: 'var(--dsw-shadow-lv3, 0 8px 24px rgba(0,0,0,.35))',
-  padding: 8,
-}
-const meta: CSSProperties = {
-  color: 'var(--dsw-alias-label-tertiary)',
-  fontSize: 11,
-  padding: '4px 8px 8px',
-}
-const row: CSSProperties = { padding: '6px 8px', fontSize: 13, lineHeight: '18px' }
-const fileTitle: CSSProperties = { fontFamily: 'var(--dsw-font-mono, ui-monospace)', marginBottom: 2 }
-const counts: CSSProperties = { color: 'var(--dsw-alias-label-tertiary)', fontSize: 11 }
-const mapLink: CSSProperties = {
-  display: 'block',
-  padding: '4px 8px 8px',
-  fontSize: 12,
-  color: 'var(--dsw-alias-label-accent, #6ea8fe)',
-}
-const blockerLine: CSSProperties = {
-  color: 'var(--dsw-alias-label-secondary)',
-  fontSize: 12,
-  paddingLeft: 8,
-  whiteSpace: 'nowrap',
-  overflow: 'hidden',
-  textOverflow: 'ellipsis',
 }
