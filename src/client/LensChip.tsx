@@ -41,8 +41,12 @@ function StatusMenu({ status }: { status: LensStatus }) {
     <div style={menu} role="dialog" aria-label="dsh-lens diagnostics">
       <div style={meta}>
         {status.languages.join(' ') || 'no languages yet'}
-        {status.failedLsp.length > 0 ? ` · LSP failed: ${status.failedLsp.join(' ')}` : ''}
+        {status.lsp.length > 0 ? ` · LSP ${status.lsp.filter(item => item.connected).length}/${status.lsp.length}` : ''}
+        {status.failedLsp.length > 0 ? ` · failed ${status.failedLsp.join(' ')}` : ''}
       </div>
+      {status.mapPath
+        ? <a href={status.mapPath} style={mapLink} target="_blank" rel="noreferrer">Open project map</a>
+        : null}
       {status.files.length === 0
         ? <div style={row}>No files analyzed this session.</div>
         : status.files.map(file => (
@@ -105,6 +109,12 @@ const meta: CSSProperties = {
 const row: CSSProperties = { padding: '6px 8px', fontSize: 13, lineHeight: '18px' }
 const fileTitle: CSSProperties = { fontFamily: 'var(--dsw-font-mono, ui-monospace)', marginBottom: 2 }
 const counts: CSSProperties = { color: 'var(--dsw-alias-label-tertiary)', fontSize: 11 }
+const mapLink: CSSProperties = {
+  display: 'block',
+  padding: '4px 8px 8px',
+  fontSize: 12,
+  color: 'var(--dsw-alias-label-accent, #6ea8fe)',
+}
 const blockerLine: CSSProperties = {
   color: 'var(--dsw-alias-label-secondary)',
   fontSize: 12,

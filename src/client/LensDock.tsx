@@ -17,7 +17,8 @@ export function LensDock({ useProjection }: DockProps) {
         <span>{chipLabel(status)}</span>
         <span style={dim}>
           {status.languages.slice(0, 4).join(' ')}
-          {status.failedLsp.length > 0 ? ` · LSP ${status.failedLsp.join(' ')}` : ''}
+          {status.lsp.length > 0 ? ` · LSP ${status.lsp.filter(item => item.connected).length}/${status.lsp.length}` : ''}
+          {status.failedLsp.length > 0 ? ` · down ${status.failedLsp.join(' ')}` : ''}
         </span>
       </button>
       {open

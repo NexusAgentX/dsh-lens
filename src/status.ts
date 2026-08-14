@@ -1,10 +1,11 @@
+import { getLSPService } from 'pi-lens/dist/clients/lsp/index.js'
 import {
   exportWidgetState,
   getFailedLspServerIds,
   getSessionLanguages,
 } from 'pi-lens/dist/clients/widget-state.js'
 import type { LensFlags } from './host.js'
-import type { LensBlocker, LensFileStatus, LensStatus } from './types.js'
+import type { LensBlocker, LensFileStatus, LensLspStatus, LensStatus } from './types.js'
 
 const MAX_FILES = 8
 const MAX_BLOCKERS_PER_FILE = 3
@@ -35,7 +36,10 @@ function basename(filePath: string): string {
   return parts.at(-1) || filePath
 }
 
-export function emptyLensStatus(flags: Pick<LensFlags, 'enabled' | 'widgetVisible'>): LensStatus {
+export function emptyLensStatus(
+  flags: Pick<LensFlags, 'enabled' | 'widgetVisible'>,
+  extras: { mapPath?: string } = {},
+): LensStatus {
   return {
     visible: flags.widgetVisible,
     enabled: flags.enabled,
@@ -45,10 +49,15 @@ export function emptyLensStatus(flags: Pick<LensFlags, 'enabled' | 'widgetVisibl
     warnings: 0,
     files: [],
     failedLsp: [],
+    lsp: [],
+    ...extras.mapPath ? { mapPath: extras.mapPath } : {},
   }
 }
 
-export function snapshotLensStatus(flags: Pick<LensFlags, 'enabled' | 'widgetVisible'>): LensStatus {
+export function snapshotLensStatus(
+  flags: Pick<LensFlags, 'enabled' | 'widgetVisible'>,
+  extras: { mapPath?: string } = {},
+): LensStatus {
   const widget = exportWidgetState() as { files?: WidgetFile[] }
   const ranked = [...widget.files ?? []]
     .sort((left, right) => (right.touchedAt ?? 0) - (left.touchedAt ?? 0))
@@ -74,6 +83,11 @@ export function snapshotLensStatus(flags: Pick<LensFlags, 'enabled' | 'widgetVis
     }
   })
 
+  const lsp = (getLSPService().getStatus() as LensLspStatus[]).map(item => ({
+    serverId: item.serverId,
+    root: item.root,
+    connected: Boolean(item.connected),
+  }))
   return {
     visible: flags.widgetVisible,
     enabled: flags.enabled,
@@ -83,6 +97,8 @@ export function snapshotLensStatus(flags: Pick<LensFlags, 'enabled' | 'widgetVis
     warnings: files.reduce((sum, file) => sum + file.warnings, 0),
     files,
     failedLsp: getFailedLspServerIds(),
+    lsp,
+    ...extras.mapPath ? { mapPath: extras.mapPath } : {},
   }
 }
 

@@ -47,6 +47,7 @@ describe('dsh-lens status formatting', () => {
     warnings: 0,
     files: [{ path: 'a.ts', blocking: 0, errors: 0, warnings: 0, blockers: [] }],
     failedLsp: [],
+    lsp: [],
   }
 
   it('labels a clean session and compares by value', () => {

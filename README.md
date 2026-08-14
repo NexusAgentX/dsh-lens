@@ -18,6 +18,12 @@ On every `write` / `edit` / `bash` mutation it runs the same pipeline pi-lens us
 
 It also registers the full agent-facing tool set and the `/lens-*` commands.
 
+Standalone CLI (review graph, same as `pi-lens build-graph`):
+
+```sh
+npx dsh-lens build-graph --cwd .
+```
+
 ## Install
 
 ```sh
@@ -83,7 +89,14 @@ Plugin config on the Cordis entry:
     cwd: /path/to/workspace   # optional; defaults to process cwd / session header.cwd
     enabled: true
     contextInjection: true
+    lsp: true
+    format: true
+    autofix: true
+    guard: false
+    turnSummary: false
 ```
+
+Boolean keys map onto the same flags as pi-lens (`--no-lsp`, `--lens-guard`, …). Omit a key to keep `.pi-lens.json` / env.
 
 ## Host limits (honest)
 

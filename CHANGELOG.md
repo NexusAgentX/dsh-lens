@@ -14,6 +14,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - WebUI diagnostics chip and dock via the official `lens` session projection.
 - Search-card presentation for diagnostics / ast-grep / symbol search.
 - `/lens-widget-toggle` now shows or hides the WebUI widget.
+- `/lens-health`, `/lens-perf`, and `/lens-tools` now match the pi-lens reports (p50/p99, LSP list, installer sources).
+- Plugin config exposes the full pi-lens flag set (`lsp`, `format`, `guard`, …).
+- `dsh-lens build-graph` delegates to the upstream review-graph CLI.
+- Widget snapshot includes live LSP status and the last `/lens-map` path.
 
 ## [0.1.0] - 2026-08-14
 

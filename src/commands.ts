@@ -1,12 +1,9 @@
 import type { Context } from '@deepseek-ai/cordis'
 import type {} from '@deepseek-ai/dsh-commands'
-import { getDiagnosticTracker } from 'pi-lens/dist/clients/diagnostic-tracker.js'
-import { getLatencyReports } from 'pi-lens/dist/clients/dispatch/integration.js'
-import { getAllToolStatuses } from 'pi-lens/dist/clients/installer/index.js'
 import { generateLensMap } from 'pi-lens/dist/clients/lens-map.js'
-import { getLSPService } from 'pi-lens/dist/clients/lsp/index.js'
 import { computeTDI, loadHistory } from 'pi-lens/dist/clients/metrics-history.js'
 import { logger } from './logger.js'
+import { renderHealthReport, renderPerfReport, renderToolsReport } from './reports.js'
 import type { LensRuntime } from './runtime.js'
 
 interface CommandResult {
@@ -95,8 +92,10 @@ export function registerLensCommands(ctx: Context, state: LensRuntime): void {
         result.compiledTwinCount > 0 ? `${result.compiledTwinCount} compiled twins merged` : '',
         result.ignoredFileCount > 0 ? `${result.ignoredFileCount} gitignored files excluded` : '',
       ].filter(Boolean)
+      state.lastMapPath = result.filePath
       const lines = [
         `Project map written to ${result.filePath}`,
+        'Open that HTML file in a browser, or use the WebUI lens chip Map link.',
         `${result.fileCount} files, ${result.edgeCount} edges, ${result.externalCount} external deps excluded${extras.length > 0 ? `; ${extras.join(', ')}` : ''}.`,
       ]
       if (result.truncated) {
@@ -108,48 +107,25 @@ export function registerLensCommands(ctx: Context, state: LensRuntime): void {
     }
   })
 
-  add('lens-health', 'Show runtime health, latency, and LSP status', () => {
-    const crashEntries = state.runtime.getCrashEntries().sort((left, right) => right[1] - left[1])
-    const totalCrashes = crashEntries.reduce((sum, [, count]) => sum + count, 0)
-    const reports = getLatencyReports()
-    const last = reports.at(-1)
-    const diagStats = getDiagnosticTracker().getStats()
-    const lsp = getLSPService()
-    const slow = last?.runners
-      ? [...last.runners].sort((left, right) => right.durationMs - left.durationMs).slice(0, 3)
-      : []
-    return ok([
-      `dsh-lens ${state.flags.enabled ? 'enabled' : 'disabled'} · context ${state.flags.contextInjection ? 'on' : 'off'}`,
-      `project: ${state.projectRoot}`,
-      `LSP clients: ${lsp.getAliveClientCount()}`,
-      `pipeline crashes: ${totalCrashes}${crashEntries.length > 0 ? ` (${crashEntries.slice(0, 5).map(([name, count]) => `${name}=${count}`).join(', ')})` : ''}`,
-      last
-        ? `last dispatch: ${last.totalDurationMs ?? '?'}ms · ${last.totalDiagnostics ?? 0} diagnostics · ${last.filePath ?? ''}`
-        : 'last dispatch: none yet',
-      slow.length > 0 ? `slow runners: ${slow.map(runner => `${runner.name ?? '?'} ${runner.durationMs}ms`).join(', ')}` : '',
-      `tracker: ${JSON.stringify(diagStats)}`,
-    ].filter(Boolean).join('\n'))
-  })
-
-  add('lens-perf', 'Show recent dispatch latency samples', () => {
-    const reports = getLatencyReports().slice(-8).reverse()
-    if (reports.length === 0) return ok('No latency samples yet. Edit a file first.')
-    return ok(reports.map((report, index) => {
-      const runners = (report.runners ?? [])
-        .slice()
-        .sort((left, right) => right.durationMs - left.durationMs)
-        .slice(0, 3)
-        .map(runner => `${runner.name ?? '?'} ${runner.durationMs}ms`)
-        .join(', ')
-      return `${index + 1}. ${report.totalDurationMs ?? '?'}ms ${report.filePath ?? ''} (${runners || 'no runners'})`
-    }).join('\n'))
-  })
-
-  add('lens-tools', 'Show language-tool install status', () => {
+  add('lens-health', 'Show runtime health, latency, and LSP status', async () => {
     try {
-      const rows = getAllToolStatuses()
-      if (rows.length === 0) return ok('No tool status available yet.')
-      return ok(rows.map(row => `${row.name}: ${row.status ?? row.source ?? 'unknown'}${row.path ? ` (${row.path})` : ''}`).join('\n'))
+      return ok(await renderHealthReport(state))
+    } catch (error) {
+      return fail(error)
+    }
+  })
+
+  add('lens-perf', 'Show the slowest latency-log phases by p50 and p99', async () => {
+    try {
+      return ok(await renderPerfReport(state))
+    } catch (error) {
+      return fail(error)
+    }
+  })
+
+  add('lens-tools', 'Show language-tool install status', async () => {
+    try {
+      return ok(await renderToolsReport())
     } catch (error) {
       return fail(error)
     }

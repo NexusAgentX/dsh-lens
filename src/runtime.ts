@@ -20,6 +20,7 @@ export interface LensRuntime {
   clients: Record<string, any>
   getFlag: (name: string, filePath?: string) => boolean | string | undefined
   started: Promise<void>
+  lastMapPath?: string
 }
 
 export interface RuntimeOptions {

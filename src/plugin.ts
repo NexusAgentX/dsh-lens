@@ -6,6 +6,7 @@ import type {} from '@deepseek-ai/dsh-skill'
 import type {} from '@deepseek-ai/dsh-system-prompt'
 import type {} from '@deepseek-ai/dsh-tools'
 import { registerLensCommands } from './commands.js'
+import { flagOverridesFromConfig, type EngineFlagConfig } from './flags.js'
 import { registerLifecycle } from './hooks.js'
 import { logger } from './logger.js'
 import { registerLensProjection } from './projection.js'
@@ -18,7 +19,7 @@ import { registerLensTools } from './tools.js'
 export const name = 'dsh-lens'
 export const inject = ['tools']
 
-export interface Config {
+export interface Config extends EngineFlagConfig {
   cwd?: string
   enabled?: boolean
   contextInjection?: boolean
@@ -28,6 +29,20 @@ export const Config: Schema<Config> = Schema.object({
   cwd: Schema.string(),
   enabled: Schema.boolean(),
   contextInjection: Schema.boolean(),
+  lsp: Schema.boolean(),
+  format: Schema.boolean(),
+  immediateFormat: Schema.boolean(),
+  autofix: Schema.boolean(),
+  tests: Schema.boolean(),
+  delta: Schema.boolean(),
+  guard: Schema.boolean(),
+  opengrep: Schema.boolean(),
+  readGuard: Schema.boolean(),
+  turnSummary: Schema.boolean(),
+  actionableWarnings: Schema.boolean(),
+  actionableWarningActions: Schema.boolean(),
+  actionableWarningAutofix: Schema.boolean(),
+  actionableWarningAll: Schema.boolean(),
 })
 
 export async function apply(ctx: Context, config: Config = {}): Promise<void> {
@@ -35,6 +50,7 @@ export async function apply(ctx: Context, config: Config = {}): Promise<void> {
     cwd: config.cwd,
     enabled: config.enabled,
     contextInjection: config.contextInjection,
+    flagOverrides: flagOverridesFromConfig(config),
   })
 
   ctx.effect(() => {

@@ -140,6 +140,10 @@ export function registerLifecycle(ctx: Context, state: LensRuntime): void {
       joinFindingMessages(consumeTurnEndFindings(state.cacheManager, cwd)),
       joinFindingMessages(consumeTestFindings(state.cacheManager, cwd)),
     ].filter((text): text is string => Boolean(text))
+    if (state.getFlag('lens-turn-summary') === true) {
+      const { formatLensDock, snapshotLensStatus } = await import('./status.js')
+      findings.push(formatLensDock(snapshotLensStatus(state.flags, { mapPath: state.lastMapPath })))
+    }
     for (const text of findings) inject(payload.agent, text, 'turn findings')
   })
 

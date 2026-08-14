@@ -27,6 +27,7 @@ declare module 'pi-lens/dist/clients/runtime-coordinator.js' {
   export class RuntimeCoordinator {
     projectRoot: string
     turnIndex: number
+    sessionStartedAt: number
     readGuard: {
       addExemption(path: string): void
       recordSymbolRead(filePath: string, symbol: unknown, turnIndex: number, writeIndex: number): void
@@ -63,7 +64,10 @@ declare module 'pi-lens/dist/clients/mcp/host-shim.js' {
 }
 
 declare module 'pi-lens/dist/clients/lsp/index.js' {
-  export function getLSPService(): { getAliveClientCount(): number; getStatus(): unknown }
+  export function getLSPService(): {
+    getAliveClientCount(): number
+    getStatus(): Array<{ serverId: string; root: string; connected: boolean }>
+  }
   export function resetLSPService(options?: unknown): void
 }
 
@@ -81,19 +85,33 @@ declare module 'pi-lens/dist/clients/dispatch/integration.js' {
   export function getLatencyReports(): Array<{
     filePath?: string
     totalDurationMs?: number
-    runners?: Array<{ name?: string; durationMs: number }>
+    runners?: Array<{ name?: string; runnerId?: string; durationMs: number; status?: string }>
     totalDiagnostics?: number
   }>
+  export function getDispatchSlopScoreLine(): string | undefined
+  export function getCascadeSessionStats(): { runs: number; diagnosticsSurfaced: number; coldSnapshotTouches: number }
+}
+
+declare module 'pi-lens/dist/clients/event-loop-monitor.js' {
+  export function getEventLoopStats(): { maxMs: number; p99Ms: number; meanMs: number } | undefined
+}
+
+declare module 'pi-lens/dist/clients/performance-report.js' {
+  export function collectLatencyPerformance(options: { sessionStartedAt?: number }): Promise<unknown>
+  export function renderLatencyPerformanceReport(report: unknown): string
 }
 
 declare module 'pi-lens/dist/clients/installer/index.js' {
   export function ensureTool(name: string): Promise<string | null | undefined>
-  export function getAllToolStatuses(): Array<{
+  export function getAllToolStatuses(): Promise<Array<{
     name: string
+    installed?: boolean
     status?: string
     source?: string
+    version?: string
+    strategy?: string
     path?: string
-  }>
+  }>>
 }
 
 declare module 'pi-lens/dist/clients/diagnostic-tracker.js' {

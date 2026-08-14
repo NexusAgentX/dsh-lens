@@ -29,6 +29,12 @@ const lensSchema = z.object({
   warnings: z.number(),
   files: z.array(fileSchema),
   failedLsp: z.array(z.string()),
+  lsp: z.array(z.object({
+    serverId: z.string(),
+    root: z.string(),
+    connected: z.boolean(),
+  })),
+  mapPath: z.string().optional(),
 })
 
 const REFRESH_EVENTS = new Set([
@@ -44,14 +50,14 @@ export function registerLensProjection(ctx: Context, state: LensRuntime): void {
     projectionCtx.sessionProjections.register<'lens', LensStatus>({
       key: 'lens',
       schema: lensSchema,
-      init: () => emptyLensStatus(state.flags),
+      init: () => emptyLensStatus(state.flags, { mapPath: state.lastMapPath }),
       apply: (current, event) => {
         if (!REFRESH_EVENTS.has(event.type)) return current
-        const next = snapshotLensStatus(state.flags)
+        const next = snapshotLensStatus(state.flags, { mapPath: state.lastMapPath })
         return lensStatusEqual(current, next) ? current : next
       },
       view: value => value,
-      stateVersion: 1,
+      stateVersion: 2,
     })
   })
 }

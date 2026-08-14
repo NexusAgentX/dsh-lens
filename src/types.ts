@@ -18,6 +18,12 @@ export interface LensFileStatus {
   blockers: LensBlocker[]
 }
 
+export interface LensLspStatus {
+  serverId: string
+  root: string
+  connected: boolean
+}
+
 export interface LensStatus {
   visible: boolean
   enabled: boolean
@@ -27,6 +33,8 @@ export interface LensStatus {
   warnings: number
   files: LensFileStatus[]
   failedLsp: string[]
+  lsp: LensLspStatus[]
+  mapPath?: string
 }
 
 declare module '@deepseek-ai/dsh-session-projection/types' {

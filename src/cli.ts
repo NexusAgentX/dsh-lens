@@ -1,6 +1,7 @@
 #!/usr/bin/env node
 
-import { readFileSync } from 'node:fs'
+import { spawn } from 'node:child_process'
+import { existsSync, readFileSync } from 'node:fs'
 import { dirname, join } from 'node:path'
 import { fileURLToPath } from 'node:url'
 import { listBundledSkills, resolvePiLensRoot } from './skills.js'
@@ -15,8 +16,10 @@ Usage:
   dsh-lens --help
   dsh-lens --version
   dsh-lens status
+  dsh-lens build-graph [--cwd <dir>]
 
-status   Print the resolved pi-lens engine root and bundled skills
+status        Print the resolved pi-lens engine root and bundled skills
+build-graph   Build and persist the review graph (same as \`pi-lens build-graph\`)
 
 Install into a Harness profile:
 
@@ -48,16 +51,29 @@ if (command === 'status') {
   process.exit(0)
 }
 
-console.error(`dsh-lens: unknown command ${JSON.stringify(command)}`)
-console.error('Run dsh-lens --help')
-process.exit(1)
+if (command === 'build-graph') {
+  const root = resolvePiLensRoot()
+  const cli = join(root, 'dist', 'mcp', 'cli.js')
+  if (!existsSync(cli)) {
+    console.error(`dsh-lens: missing ${cli}`)
+    process.exit(1)
+  }
+  const child = spawn(process.execPath, [cli, 'build-graph', ...process.argv.slice(3)], {
+    stdio: 'inherit',
+  })
+  child.on('exit', code => process.exit(code ?? 1))
+} else {
+  console.error(`dsh-lens: unknown command ${JSON.stringify(command)}`)
+  console.error('Run dsh-lens --help')
+  process.exit(1)
+}
 
 function readPackageVersion(): string {
   try {
     const here = dirname(fileURLToPath(import.meta.url))
     const pkg = JSON.parse(readFileSync(join(here, '..', 'package.json'), 'utf8')) as { version?: string }
-    return pkg.version ?? '0.1.0'
+    return pkg.version ?? '0.2.0'
   } catch {
-    return '0.1.0'
+    return '0.2.0'
   }
 }
