@@ -7,6 +7,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.2.4] - 2026-08-14
+
+### Fixed
+
+- Client plugin injects `locale` before registering dictionaries. `if (ctx.locale)` still reads the service and crashed the Web overlay with `cannot get property "locale" without inject`.
+
 ## [0.2.3] - 2026-08-14
 
 ### Fixed

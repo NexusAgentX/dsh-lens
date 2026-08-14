@@ -1,6 +1,6 @@
 {
   "name": "dsh-lens",
-  "version": "0.2.3",
+  "version": "0.2.4",
   "description": "Real-time code feedback for DeepSeek Harness — LSP, linters, formatters, type-checking, and structural analysis.",
   "type": "module",
   "main": "./dist/index.js",

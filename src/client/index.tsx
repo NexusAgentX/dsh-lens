@@ -3,11 +3,11 @@ import { LensDock } from './LensDock.js'
 import { NS, en, zh } from './locales.js'
 
 export const name = 'dsh-lens'
-export const inject = ['slots']
+export const inject = ['slots', 'locale']
 
 interface ClientContext {
   effect(fn: () => (() => void) | void, label?: string): void
-  locale?: { register(ns: string, dicts: { zh: unknown; en: unknown }): () => void }
+  locale: { register(ns: string, dicts: { zh: unknown; en: unknown }): () => void }
   slots: {
     inject(name: string, factory: () => unknown): unknown
     register(spec: Record<string, unknown>, component: unknown): unknown
@@ -15,7 +15,7 @@ interface ClientContext {
 }
 
 export function apply(ctx: ClientContext): void {
-  if (ctx.locale) ctx.effect(() => ctx.locale.register(NS, { zh, en }), 'dsh-lens: dictionaries')
+  ctx.effect(() => ctx.locale.register(NS, { zh, en }), 'dsh-lens: dictionaries')
 
   ctx.slots.inject('conversation.session.header.actions', () => ctx.slots.register({
     name: 'conversation.session.header.actions',
