@@ -1,6 +1,7 @@
 .github/
 src/
 test/
+dist/test/
 tsconfig.json
 *.tgz
 .env
