@@ -7,6 +7,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.2.2] - 2026-08-14
+
+### Fixed
+
+- Re-export `inject` from the package entry so Cordis can see `ctx.tools` when the plugin loads.
+- Register `/lens-*` commands, the system-prompt section, and bundled skills with `ctx.inject` instead of `ctx.get` without inject.
+
+## [0.2.1] - 2026-08-14
+
 ### Changed
 
 - README now documents WebUI primitives, the full flag table, skills, and host limits.

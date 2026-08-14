@@ -12,16 +12,22 @@ interface CommandResult {
 }
 
 export function registerLensCommands(ctx: Context, state: LensRuntime): void {
-  const commands = ctx.get('commands') as {
+  ctx.inject(['commands'], (cmdCtx) => {
+    registerLensCommandsOn(cmdCtx.commands, state)
+  })
+}
+
+function registerLensCommandsOn(
+  commands: {
     register(definition: {
       name: string
       description: string
       input?: { hint: string }
       handler: (invocation: { rawInput: string }) => CommandResult | Promise<CommandResult>
     }): () => void
-  } | undefined
-  if (!commands) return
-
+  },
+  state: LensRuntime,
+): void {
   const add = (
     name: string,
     description: string,

@@ -23,9 +23,24 @@ describe('dsh-lens package', () => {
   })
 
   it('exports a Cordis plugin entry', async () => {
-    const mod = await import('../index.js') as { name: string; apply: unknown; Config: unknown }
+    const mod = await import('../index.js') as { name: string; apply: unknown; Config: unknown; inject: unknown }
     assert.equal(mod.name, 'dsh-lens')
     assert.equal(typeof mod.apply, 'function')
     assert.ok(mod.Config)
+    assert.deepEqual(mod.inject, ['tools'])
+  })
+
+  it('waits for optional host services instead of ctx.get without inject', () => {
+    const plugin = readFileSync(join(pkgRoot, 'src/plugin.ts'), 'utf8')
+    const commands = readFileSync(join(pkgRoot, 'src/commands.ts'), 'utf8')
+    const prompt = readFileSync(join(pkgRoot, 'src/prompt.ts'), 'utf8')
+    const skills = readFileSync(join(pkgRoot, 'src/skills.ts'), 'utf8')
+    assert.match(plugin, /export const inject = \['tools'\]/)
+    assert.match(commands, /ctx\.inject\(\['commands'\]/)
+    assert.match(prompt, /ctx\.inject\(\['systemPrompt'\]/)
+    assert.match(skills, /ctx\.inject\(\['skills'\]/)
+    assert.doesNotMatch(commands, /ctx\.get\('commands'\)/)
+    assert.doesNotMatch(prompt, /ctx\.get\('systemPrompt'\)/)
+    assert.doesNotMatch(skills, /ctx\.get\('skills'\)/)
   })
 })

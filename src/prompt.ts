@@ -12,13 +12,11 @@ const LENS_PROMPT = [
 ].join(' ')
 
 export function registerLensPrompt(ctx: Context): void {
-  const systemPrompt = ctx.get('systemPrompt') as {
-    section(section: { name: string; order: number; text: string }): () => void
-  } | undefined
-  if (!systemPrompt) return
-  systemPrompt.section({
-    name: 'dsh-lens',
-    order: 118,
-    text: LENS_PROMPT,
+  ctx.inject(['systemPrompt'], (promptCtx) => {
+    promptCtx.systemPrompt.section({
+      name: 'dsh-lens',
+      order: 118,
+      text: LENS_PROMPT,
+    })
   })
 }

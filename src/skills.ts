@@ -2,18 +2,10 @@ import { existsSync, readdirSync, readFileSync } from 'node:fs'
 import { dirname, join } from 'node:path'
 import { createRequire } from 'node:module'
 import type { Context } from '@deepseek-ai/cordis'
+import { BUNDLED_SKILL_RANK } from '@deepseek-ai/dsh-skill'
+import type { SkillCandidate, SkillProvider } from '@deepseek-ai/dsh-skill'
 import type {} from '@deepseek-ai/dsh-skill'
 import { logger } from './logger.js'
-
-interface SkillCandidate {
-  name: string
-  description: string
-  invocation: { modelInvocable: boolean; userInvocable: boolean }
-  provider: string
-  source: 'bundled'
-  resourceBase: { kind: 'directory'; path: string }
-  locator: string
-}
 
 const PROVIDER = 'dsh-lens'
 const INVOCATION = { modelInvocable: true, userInvocable: true } as const
@@ -38,6 +30,7 @@ export function listBundledSkills(root = resolvePiLensRoot()): SkillCandidate[] 
       invocation: INVOCATION,
       provider: PROVIDER,
       source: 'bundled',
+      rank: BUNDLED_SKILL_RANK,
       resourceBase: { kind: 'directory', path: join(skillsDir, entry.name) },
       locator: skillFile,
     })
@@ -46,32 +39,31 @@ export function listBundledSkills(root = resolvePiLensRoot()): SkillCandidate[] 
 }
 
 export function registerLensSkills(ctx: Context): void {
-  const skills = ctx.get('skills') as {
-    registerProvider(factory: () => unknown): unknown
-  } | undefined
-  if (!skills) return
-  const candidates = listBundledSkills()
-  if (candidates.length === 0) {
-    logger.warn('no bundled pi-lens skills found')
-    return
-  }
-  const provider = {
-    name: PROVIDER,
-    list: () => Promise.resolve(candidates),
-    async get(candidate: SkillCandidate) {
-      return {
-        name: candidate.name,
-        description: candidate.description,
-        invocation: candidate.invocation,
-        provider: candidate.provider,
-        source: candidate.source,
-        resourceBase: candidate.resourceBase,
-        content: readFileSync(candidate.locator, 'utf8'),
-      }
-    },
-  }
-  skills.registerProvider(() => provider)
-  logger.debug(`registered ${candidates.length} bundled lens skills`)
+  ctx.inject(['skills'], (skillCtx) => {
+    const candidates = listBundledSkills()
+    if (candidates.length === 0) {
+      logger.warn('no bundled pi-lens skills found')
+      return
+    }
+    const provider: SkillProvider = {
+      name: PROVIDER,
+      list: () => Promise.resolve(candidates),
+      async get(candidate) {
+        if (typeof candidate.locator !== 'string' || !existsSync(candidate.locator)) return undefined
+        return {
+          name: candidate.name,
+          description: candidate.description,
+          invocation: candidate.invocation,
+          provider: candidate.provider,
+          source: candidate.source,
+          resourceBase: candidate.resourceBase,
+          content: readFileSync(candidate.locator, 'utf8'),
+        }
+      },
+    }
+    skillCtx.skills.registerProvider(() => provider)
+    logger.debug(`registered ${candidates.length} bundled lens skills`)
+  })
 }
 
 function extractDescription(markdown: string): string | undefined {

@@ -1,5 +1,5 @@
 export const name = 'dsh-lens'
-export { apply, Config } from './plugin.js'
+export { apply, Config, inject } from './plugin.js'
 export type { Config as PluginConfig } from './plugin.js'
 
 export { normalizeToolEvent, normalizeToolInput, resolveFilePath } from './events.js'
