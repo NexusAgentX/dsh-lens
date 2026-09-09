@@ -37,7 +37,7 @@ interface PiTool {
     params: Record<string, unknown>,
     signal: AbortSignal | undefined,
     onUpdate: unknown,
-    ctx?: { cwd?: string; signal?: AbortSignal },
+    ctx?: { cwd?: string; signal?: AbortSignal; agent?: unknown },
   ): Promise<{
     content?: Array<{ type: string; text?: string }>
     isError?: boolean
@@ -94,8 +94,16 @@ export function createCodeIntelTool(state: LensRuntime, ctx: Context): PiTool {
   // CodeIndexer reads the dsh executor shape (exec.agent.session.header.cwd /
   // exec.signal). The pi shim context (5th execute arg, { cwd, signal }) is
   // enough to synthesize one, so no wrapPiTool changes are required.
-  const fakeExec = (c2: { cwd?: string; signal?: AbortSignal }): ToolExecution =>
-    ({ agent: { session: { header: { cwd: c2.cwd } } }, signal: c2.signal }) as unknown as ToolExecution
+  // Prefer forwarding the real agent when the caller provides one:
+  // session-scoped services (e.g. background-job ownership checks) resolve
+  // against the session-level agent context, and a synthetic plugin-level
+  // agent fails that check ("no job controller serves this agent"). The real
+  // agent carries both session.header.cwd and its own ctx, and background
+  // builds started with it are owned by the calling session (and cleaned up
+  // when it closes). The synthetic fallback only serves call paths that
+  // carry no agent.
+  const fakeExec = (c2: { cwd?: string; signal?: AbortSignal; agent?: unknown }): ToolExecution =>
+    ({ agent: c2.agent ?? { session: { header: { cwd: c2.cwd } } }, signal: c2.signal }) as unknown as ToolExecution
   const inner: Record<string, PiTool | null> = {
     symbol_search: createSymbolSearchTool(getRoot) as PiTool,
     project_report: createProjectReportTool(getRoot) as PiTool,
@@ -274,7 +282,10 @@ export function wrapPiTool(tool: PiTool, state?: LensRuntime): ToolDefinition {
         asRecord(args),
         exec.signal,
         undefined,
-        { cwd, signal: exec.signal },
+        // Forward the real agent so session-scoped services inside the tools
+        // (e.g. the code_intel CodeIndexer scheduling background builds) see
+        // the calling session's identity. Other pi tools ignore this field.
+        { cwd, signal: exec.signal, agent: exec.agent },
       )
       const text = (result.content ?? []).map(block => block.text ?? '').join('\n')
       if (result.isError) throw new Error(text || `${tool.name} failed`)
