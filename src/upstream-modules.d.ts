@@ -209,6 +209,22 @@ declare module 'pi-lens/dist/tools/activate-tools.js' {
   export function createActivateToolsTool(...args: unknown[]): PiLensTool
 }
 
+declare module 'pi-lens/dist/clients/deps/typebox.js' {
+  export interface TypeBoxSchema {
+    [key: string]: unknown
+  }
+  export const Type: {
+    Object(properties: Record<string, TypeBoxSchema>, options?: Record<string, unknown>): TypeBoxSchema
+    Union(schemas: TypeBoxSchema[], options?: Record<string, unknown>): TypeBoxSchema
+    Optional(schema: TypeBoxSchema): TypeBoxSchema
+    Literal(value: string): TypeBoxSchema
+    String(options?: Record<string, unknown>): TypeBoxSchema
+    Number(options?: Record<string, unknown>): TypeBoxSchema
+    Boolean(options?: Record<string, unknown>): TypeBoxSchema
+    Array(items: TypeBoxSchema, options?: Record<string, unknown>): TypeBoxSchema
+  }
+}
+
 interface PiLensTool {
   name: string
   label?: string
