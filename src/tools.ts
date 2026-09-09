@@ -87,6 +87,14 @@ export function createCodeIntelTool(state: LensRuntime, ctx: Context): PiTool {
           credentialRef: 'GLM_CODE_EMBEDDING_KEY',
           batchSize: 32,
         },
+        // CJK-safe chunk cap. Embedding endpoints limit each input item by
+        // tokens, and CJK text runs close to one token per character, so the
+        // 12000-char default exceeds typical per-item token limits for CJK
+        // chunks (measured against one endpoint: a 6900-char CJK chunk was
+        // rejected with HTTP 400 / error code 1210, while 12000 ASCII chars
+        // ~= 3000 tokens passed). 3000 chars keeps CJK chunks within the
+        // limit; the cost for ASCII-heavy corpora is small (~750 tokens).
+        maxChunkChars: 3000,
       }))
     }
     return ciIndexer
