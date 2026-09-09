@@ -1,5 +1,6 @@
 import assert from 'node:assert/strict'
 import { describe, it } from 'node:test'
+import type { Context } from '@deepseek-ai/cordis'
 import { assertSupportedJsonSchema } from '@deepseek-ai/dsh-tools'
 import { AstGrepClient } from 'pi-lens/dist/clients/ast-grep-client.js'
 import { CacheManager } from 'pi-lens/dist/clients/cache-manager.js'
@@ -80,8 +81,9 @@ describe('dsh-lens schema subset', () => {
 
   it('projects every bundled pi-lens tool onto a registerable schema', () => {
     const state = fakeRuntime()
-    const tools = createPiTools(state)
-    assert.ok(tools.length >= 10)
+    const tools = createPiTools(state, {} as unknown as Context)
+    // 2 aggregated always-active tools + activate + 6 lazy tools.
+    assert.ok(tools.length >= 9)
     for (const tool of tools) {
       const wrapped = wrapPiTool(tool)
       assertSupportedJsonSchema(wrapped.parameters as object)

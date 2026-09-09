@@ -3,8 +3,8 @@ import type {} from '@deepseek-ai/dsh-system-prompt'
 
 const LENS_PROMPT = [
   'dsh-lens watches write/edit/bash mutations and injects blockers into the next turn.',
-  'Use lens_diagnostics mode=all before declaring work done; mode=full is an expensive project-wide scan.',
-  'Discovery funnel: symbol_search → module_report → read_symbol / read_enclosing.',
+  'Use lens(action=diagnostics) mode=all before declaring work done; mode=full is an expensive project-wide scan.',
+  'Discovery funnel: code_intel(action=symbol_search) → code_intel(action=module_report) → code_intel(action=read_symbol / read_enclosing).',
   'Use ast_grep_search / ast_grep_replace for structural edits; ast_grep_dump when a pattern matches nothing.',
   'Use lsp_navigation for definition/references/rename; keep the official lsp tool for simple go-to when that is enough.',
   'Address 🔴 blockers before continuing. ℹ️ advisories are informational.',
