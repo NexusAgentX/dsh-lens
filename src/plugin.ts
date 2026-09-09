@@ -17,7 +17,12 @@ import { registerLensSkills } from './skills.js'
 import { registerLensTools } from './tools.js'
 
 export const name = 'dsh-lens'
-export const inject = ['tools']
+
+// `credentials` / `fs` / `jobs` are required by the self-owned CodeIndexer
+// behind the aggregated code_intel tool (search / outline actions): it
+// resolves embedding credentials per operation, reads through the fs
+// service, and schedules background index builds as jobs.
+export const inject = ['tools', 'credentials', 'fs', 'jobs']
 
 export interface Config extends EngineFlagConfig {
   cwd?: string

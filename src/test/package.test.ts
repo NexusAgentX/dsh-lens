@@ -27,7 +27,7 @@ describe('dsh-lens package', () => {
     assert.equal(mod.name, 'dsh-lens')
     assert.equal(typeof mod.apply, 'function')
     assert.ok(mod.Config)
-    assert.deepEqual(mod.inject, ['tools'])
+    assert.deepEqual(mod.inject, ['tools', 'credentials', 'fs', 'jobs'])
   })
 
   it('waits for optional host services instead of ctx.get without inject', () => {
@@ -35,7 +35,7 @@ describe('dsh-lens package', () => {
     const commands = readFileSync(join(pkgRoot, 'src/commands.ts'), 'utf8')
     const prompt = readFileSync(join(pkgRoot, 'src/prompt.ts'), 'utf8')
     const skills = readFileSync(join(pkgRoot, 'src/skills.ts'), 'utf8')
-    assert.match(plugin, /export const inject = \['tools'\]/)
+    assert.match(plugin, /export const inject = \['tools', 'credentials', 'fs', 'jobs'\]/)
     assert.match(commands, /ctx\.inject\(\['commands'\]/)
     assert.match(prompt, /ctx\.inject\(\['systemPrompt'\]/)
     assert.match(skills, /ctx\.inject\(\['skills'\]/)
