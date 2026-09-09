@@ -1,5 +1,5 @@
 import type { Context } from '@deepseek-ai/cordis'
-import type { ToolDefinition } from '@deepseek-ai/dsh-tools'
+import type { ToolDefinition, ToolExecution } from '@deepseek-ai/dsh-tools'
 import type {} from '@deepseek-ai/dsh-tools'
 import { createAstGrepDumpTool } from 'pi-lens/dist/tools/ast-dump.js'
 import { createAstGrepOutlineTool } from 'pi-lens/dist/tools/ast-grep-outline.js'
@@ -17,6 +17,8 @@ import {
 } from 'pi-lens/dist/tools/module-report.js'
 import { createProjectReportTool } from 'pi-lens/dist/tools/project-report.js'
 import { createSymbolSearchTool } from 'pi-lens/dist/tools/symbol-search.js'
+import { Type } from 'pi-lens/dist/clients/deps/typebox.js'
+import { CodeIndexer, resolveConfig } from 'dsh-code-intel'
 import { flushDebouncedToolResults } from 'pi-lens/dist/clients/runtime-tool-result.js'
 import { presentLensCall, searchMetaFromValue } from './cards.js'
 import { extractResultText, jsonSafe, asRecord } from './events.js'
@@ -52,38 +54,172 @@ const LAZY_TOOL_CATALOG = [
   { name: 'lens_diagnostic_mark', summary: 'Triage a diagnostic: false-positive / suppress / defer / flagged.' },
 ]
 
-export function createPiTools(state: LensRuntime): PiTool[] {
+/**
+ * Aggregate the always-active flat pi-lens tools into one action-based
+ * `code_intel` tool.
+ *
+ * The inner factories are reused unchanged (state wiring and read-guard
+ * bookkeeping are preserved); only the tool surface is collapsed. This
+ * mirrors the action-based `code_intel` tool shipped by the harness itself
+ * and keeps the per-round tool schema payload low: N flat schemas that the
+ * harness injects every round become one.
+ *
+ * `search` / `outline` are served by a self-owned `CodeIndexer` from the
+ * `dsh-code-intel` package, reused here as a library (that package is not
+ * modified).
+ */
+export function createCodeIntelTool(state: LensRuntime, ctx: Context): PiTool {
   const getRoot = () => state.sessionCwd ?? state.projectRoot
-  const alwaysActive: PiTool[] = [
-    createLensDiagnosticsTool(
+  const recordRead = (filePath: string, symbol: unknown) => state.runtime.readGuard.recordSymbolRead(
+    filePath,
+    symbol,
+    state.runtime.turnIndex,
+    state.runtime.peekWriteIndex(),
+  )
+  let ciIndexer: CodeIndexer | null = null
+  const getCodeIntel = (): CodeIndexer => {
+    if (!ciIndexer) {
+      ciIndexer = new CodeIndexer(ctx, resolveConfig({
+        embedding: {
+          provider: 'openai-compatible',
+          endpoint: 'https://open.bigmodel.cn/api/paas/v4/embeddings',
+          model: 'embedding-3',
+          credentialRef: 'GLM_CODE_EMBEDDING_KEY',
+          batchSize: 32,
+        },
+      }))
+    }
+    return ciIndexer
+  }
+  // CodeIndexer reads the dsh executor shape (exec.agent.session.header.cwd /
+  // exec.signal). The pi shim context (5th execute arg, { cwd, signal }) is
+  // enough to synthesize one, so no wrapPiTool changes are required.
+  const fakeExec = (c2: { cwd?: string; signal?: AbortSignal }): ToolExecution =>
+    ({ agent: { session: { header: { cwd: c2.cwd } } }, signal: c2.signal }) as unknown as ToolExecution
+  const inner: Record<string, PiTool | null> = {
+    symbol_search: createSymbolSearchTool(getRoot) as PiTool,
+    project_report: createProjectReportTool(getRoot) as PiTool,
+    module_report: createModuleReportTool(getRoot) as PiTool,
+    read_symbol: createReadSymbolTool(getRoot, recordRead) as PiTool,
+    read_enclosing: createReadEnclosingTool(getRoot, recordRead) as PiTool,
+    // `search` / `outline` are served by the CodeIndexer above.
+    search: null,
+    outline: null,
+  }
+  return {
+    name: 'code_intel',
+    label: 'Code Intel',
+    description: 'Seven code tools in one. action=search: workspace code search (symbol-aware chunks, lexical or hybrid). outline: AST declarations for one file/dir before broad reads. symbol_search: ranked identifier search. module_report: file outline + who-uses-this. read_symbol: exact symbol body. read_enclosing: smallest body around a line. project_report: repo orientation. Triggers: find code, read a body, orient. (LSP diagnostics live in lens(action=lsp_diagnostics).)',
+    parameters: Type.Object({
+      action: Type.Union([
+        Type.Literal('search'),
+        Type.Literal('outline'),
+        Type.Literal('symbol_search'),
+        Type.Literal('module_report'),
+        Type.Literal('project_report'),
+        Type.Literal('read_symbol'),
+        Type.Literal('read_enclosing'),
+      ], { description: 'Which sub-operation to run.' }),
+      query: Type.Optional(Type.String({ description: 'search/symbol_search: concept, behavior, API, or symbol to find.' })),
+      limit: Type.Optional(Type.Number({ description: 'search/symbol_search/project_report: max results (default 20 / 20 / 10).' })),
+      paths: Type.Optional(Type.Array(Type.String(), { description: 'symbol_search: glob scope array.' })),
+      lang: Type.Optional(Type.String({ description: 'symbol_search: restrict language (typescript, python, go...).' })),
+      path: Type.Optional(Type.String({ description: 'module_report/read_symbol/read_enclosing/outline: file or directory path.' })),
+      view: Type.Optional(Type.String({ description: 'module_report/project_report: payload tier (summary/default/compact).' })),
+      focus: Type.Optional(Type.String({ description: 'module_report/project_report: task hint to rank sections.' })),
+      blastRadius: Type.Optional(Type.Boolean({ description: 'module_report: include transitive dependents.' })),
+      blastRadiusDepth: Type.Optional(Type.Number({ description: 'module_report: max hops (default 3).' })),
+      maxRefsPerSymbol: Type.Optional(Type.Number({ description: 'module_report: cap who-uses entries (default 10).' })),
+      symbol: Type.Optional(Type.String({ description: 'read_symbol: exact symbol name (dotted Class.method ok).' })),
+      kind: Type.Optional(Type.String({ description: 'read_symbol: disambiguate kind (function/class...).' })),
+      line: Type.Optional(Type.Number({ description: 'read_enclosing: 1-based line inside the target body.' })),
+      kinds: Type.Optional(Type.Array(Type.String(), { description: 'read_enclosing: filter kinds (function/method/callback...).' })),
+      maxLines: Type.Optional(Type.Number({ description: 'read_enclosing: body size cap (default 80).' })),
+      onOversize: Type.Optional(Type.String({ description: 'read_enclosing: error|slice|outline (default error).' })),
+      aroundLine: Type.Optional(Type.Number({ description: 'read_enclosing: slice window when onOversize=slice.' })),
+    }),
+    async execute(toolCallId, params, signal, onUpdate, execCtx) {
+      const args = asRecord(params) ?? {}
+      const action = args.action
+      const { action: _drop, ...rest } = args
+      if (action === 'search' || action === 'outline') {
+        const idx = getCodeIntel()
+        const fx = fakeExec(execCtx ?? { cwd: getRoot(), signal })
+        // Default limit 20 matches the parameter description; CodeIndexer
+        // expects a numeric limit.
+        const r = action === 'search'
+          ? await idx.search(String(rest.query ?? '').trim(), Number(rest.limit ?? 20), fx)
+          : await idx.outline(String(rest.path ?? '').trim(), fx)
+        // CodeIndexer returns plain objects — wrap into the pi tool shape.
+        return { content: [{ type: 'text', text: JSON.stringify(r) }], isError: false, details: r }
+      }
+      const tool = action === undefined ? undefined : inner[String(action)]
+      if (!tool) {
+        throw new Error(`code_intel: unknown action "${String(action)}" (expected one of ${Object.keys(inner).join('/')})`)
+      }
+      return tool.execute(toolCallId, rest, signal, onUpdate, execCtx)
+    },
+  }
+}
+
+/**
+ * Merge the two diagnostic tools (`lens_diagnostics` + `lsp_diagnostics`)
+ * into one action-based `lens` tool. Both factories are reused unchanged;
+ * only the tool surface is collapsed (same aggregation pattern as
+ * `code_intel` above).
+ */
+export function createLensTool(state: LensRuntime, getRoot: () => string): PiTool {
+  const inner: Record<string, PiTool> = {
+    diagnostics: createLensDiagnosticsTool(
       state.cacheManager,
       getRoot,
       undefined,
       () => flushDebouncedToolResults(),
       () => state.runtime.nextWriteIndex(),
     ) as PiTool,
-    createLspDiagnosticsTool(() => state.runtime.nextWriteIndex()) as PiTool,
-    createSymbolSearchTool(getRoot) as PiTool,
-    createProjectReportTool(getRoot) as PiTool,
-    createModuleReportTool(getRoot) as PiTool,
-    createReadSymbolTool(
-      getRoot,
-      (filePath: string, symbol: unknown) => state.runtime.readGuard.recordSymbolRead(
-        filePath,
-        symbol,
-        state.runtime.turnIndex,
-        state.runtime.peekWriteIndex(),
-      ),
-    ) as PiTool,
-    createReadEnclosingTool(
-      getRoot,
-      (filePath: string, symbol: unknown) => state.runtime.readGuard.recordSymbolRead(
-        filePath,
-        symbol,
-        state.runtime.turnIndex,
-        state.runtime.peekWriteIndex(),
-      ),
-    ) as PiTool,
+    lsp_diagnostics: createLspDiagnosticsTool(() => state.runtime.nextWriteIndex()) as PiTool,
+  }
+  return {
+    name: 'lens',
+    label: 'Lens',
+    description: 'Two diagnostic tools in one. action=diagnostics: pi-lens runner state - LSP errors, tree-sitter structural rules, lint/complexity findings (mode=delta default / all session / full active project scan; refreshRunners for fresh heavyweight analysis). action=lsp_diagnostics: proactive LSP type/error check on files, folders, or batches - run before declaring code work done.',
+    parameters: Type.Object({
+      action: Type.Union([
+        Type.Literal('diagnostics'),
+        Type.Literal('lsp_diagnostics'),
+      ], { description: 'Which sub-operation to run.' }),
+      mode: Type.Optional(Type.String({ description: 'diagnostics: delta|all|full (default delta).' })),
+      refreshRunners: Type.Optional(Type.Union([Type.String(), Type.Boolean()], { description: 'diagnostics: none|cheap|all - run fresh heavyweight analyzers.' })),
+      severity: Type.Optional(Type.String({ description: 'both: error|warning|information|hint|all.' })),
+      paths: Type.Optional(Type.Array(Type.String(), { description: 'both: explicit file/directory scope (max 200).' })),
+      maxProjectFiles: Type.Optional(Type.Number({ description: 'diagnostics: cap cheap project-runner scan.' })),
+      maxLspFiles: Type.Optional(Type.Number({ description: 'diagnostics: cap LSP sweep.' })),
+      concurrency: Type.Optional(Type.Number({ description: 'lsp_diagnostics: batch concurrency (max 16).' })),
+      waitMs: Type.Optional(Type.Number({ description: 'lsp_diagnostics: per-file wait budget ms.' })),
+      serverScope: Type.Optional(Type.String({ description: 'lsp_diagnostics: primary|all.' })),
+    }),
+    async execute(toolCallId, params, signal, onUpdate, execCtx) {
+      const args = asRecord(params) ?? {}
+      const action = args.action
+      const { action: _drop, ...rest } = args
+      const tool = action === undefined ? undefined : inner[String(action)]
+      if (!tool) {
+        throw new Error(`lens: unknown action "${String(action)}" (expected diagnostics/lsp_diagnostics)`)
+      }
+      return tool.execute(toolCallId, rest, signal, onUpdate, execCtx)
+    },
+  }
+}
+
+export function createPiTools(state: LensRuntime, ctx: Context): PiTool[] {
+  const getRoot = () => state.sessionCwd ?? state.projectRoot
+  const alwaysActive: PiTool[] = [
+    // lens: the two diagnostic tools merged into one action-based tool.
+    createLensTool(state, getRoot),
+    // code_intel: the flat always-active pi-lens tools collapsed into one
+    // action-based tool (drops several per-round schemas; every action and
+    // its parameters stay reachable through the `action` field).
+    createCodeIntelTool(state, ctx),
   ]
 
   const lazy: PiTool[] = [
@@ -149,7 +285,7 @@ export function wrapPiTool(tool: PiTool, state?: LensRuntime): ToolDefinition {
 }
 
 export function registerLensTools(ctx: Context, state: LensRuntime): void {
-  for (const tool of createPiTools(state)) {
+  for (const tool of createPiTools(state, ctx)) {
     try {
       ctx.tools.register(wrapPiTool(tool, state))
     } catch (error) {
