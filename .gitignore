@@ -9,3 +9,7 @@ npm-debug.log*
 .vscode/
 dist/
 coverage/
+
+# Local scratch: one-off probe scripts and captured session logs
+.probe-*
+.session-dump.jsonl

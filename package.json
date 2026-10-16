@@ -1,141 +1,143 @@
 {
-  "name": "dsh-lens",
-  "version": "0.2.5",
-  "description": "Real-time code feedback for DeepSeek Harness — LSP, linters, formatters, type-checking, and structural analysis.",
-  "type": "module",
-  "main": "./dist/index.js",
-  "types": "./dist/index.d.ts",
-  "exports": {
-    ".": {
-      "types": "./dist/index.d.ts",
-      "import": "./dist/index.js",
-      "default": "./dist/index.js"
-    },
-    "./package.json": "./package.json",
-    "./client": {
-      "default": "./dist/client.js"
-    },
-    "./types": {
-      "types": "./dist/types.d.ts",
-      "import": "./dist/types.js",
-      "default": "./dist/types.js"
-    }
-  },
-  "bin": {
-    "dsh-lens": "./dist/cli.js"
-  },
-  "files": [
-    "dist",
-    "cordis.patch.yml",
-    "README.md",
-    "LICENSE",
-    "NOTICE"
-  ],
-  "dsh": {
-    "bundle": {
-      "patch": "./cordis.patch.yml"
-    },
-    "client": {
-      "platform": "web",
-      "inject": [
-        "@deepseek-ai/dsh-client-locale",
-        "@deepseek-ai/dsh-client-runtime",
-        "@deepseek-ai/dsh-client-ui-conversation",
-        "@deepseek-ai/dsh-client-ui-primitives"
-      ]
-    }
-  },
-  "scripts": {
-    "build": "tsc -p tsconfig.json && node scripts/bundle-client.mjs",
-    "typecheck": "tsc -p tsconfig.json --noEmit",
-    "test": "npm run build && node --test --test-reporter=spec dist/test/*.test.js",
-    "prepack": "npm run build && node --test --test-reporter=spec dist/test/*.test.js"
-  },
-  "engines": {
-    "node": ">=20"
-  },
-  "keywords": [
-    "dsh",
-    "dsh-plugin",
-    "deepseek-harness",
-    "lsp",
-    "linter",
-    "formatter",
-    "ast-grep",
-    "tree-sitter",
-    "code-quality",
-    "ai",
-    "coding-agent",
-    "webui"
-  ],
-  "license": "MIT",
-  "author": "NexusAgentX",
-  "repository": {
-    "type": "git",
-    "url": "git+https://github.com/NexusAgentX/dsh-lens.git"
-  },
-  "bugs": {
-    "url": "https://github.com/NexusAgentX/dsh-lens/issues"
-  },
-  "homepage": "https://github.com/NexusAgentX/dsh-lens#readme",
-  "publishConfig": {
-    "access": "public"
-  },
-  "dependencies": {
-    "pi-lens": "^3.8.74",
-    "zod": "^4.4.3"
-  },
-  "peerDependencies": {
-    "@deepseek-ai/cordis": "^4.0.1",
-    "@deepseek-ai/dsh-agent": "^0.0.1-rc.1",
-    "@deepseek-ai/dsh-commands": "^0.0.1-rc.1",
-    "@deepseek-ai/dsh-llm": "^0.0.1-rc.1",
-    "@deepseek-ai/dsh-client-ui-primitives": "^0.0.1-rc.1",
-    "@deepseek-ai/dsh-session-projection": "^0.0.1-rc.1",
-    "@deepseek-ai/dsh-skill": "^0.0.1-rc.1",
-    "@deepseek-ai/dsh-system-prompt": "^0.0.1-rc.1",
-    "@deepseek-ai/dsh-tools": "^0.0.1-rc.1",
-    "@deepseek-ai/schemastery": "^3.18.1"
-  },
-  "peerDependenciesMeta": {
-    "@deepseek-ai/dsh-agent": {
-      "optional": true
-    },
-    "@deepseek-ai/dsh-commands": {
-      "optional": true
-    },
-    "@deepseek-ai/dsh-client-ui-primitives": {
-      "optional": true
-    },
-    "@deepseek-ai/dsh-session-projection": {
-      "optional": true
-    },
-    "@deepseek-ai/dsh-skill": {
-      "optional": true
-    },
-    "@deepseek-ai/dsh-system-prompt": {
-      "optional": true
-    }
-  },
-  "devDependencies": {
-    "@deepseek-ai/cordis": "^4.0.1",
-    "@deepseek-ai/dsh-agent": "^0.0.1-rc.1",
-    "@deepseek-ai/dsh-commands": "^0.0.1-rc.1",
-    "@deepseek-ai/dsh-llm": "^0.0.1-rc.1",
-    "@deepseek-ai/dsh-client-ui-primitives": "^0.0.1-rc.1",
-    "@deepseek-ai/dsh-session-projection": "^0.0.1-rc.1",
-    "@deepseek-ai/dsh-skill": "^0.0.1-rc.1",
-    "@deepseek-ai/dsh-system-prompt": "^0.0.1-rc.1",
-    "@deepseek-ai/dsh-tools": "^0.0.1-rc.1",
-    "@deepseek-ai/schemastery": "^3.18.1",
-    "@types/node": "^22.15.0",
-    "@types/react": "^18.3.1",
-    "esbuild": "^0.25.0",
-    "react": "^18.2.0",
-    "typescript": "^5.9.3"
-  },
-  "allowScripts": {
-    "@ast-grep/cli@0.45.1": true,
-    "esbuild@0.25.12": true
-  }
+	"name": "dsh-lens",
+	"version": "0.3.3",
+	"description": "Real-time code feedback for DeepSeek Harness — LSP, linters, formatters, type-checking, and structural analysis.",
+	"type": "module",
+	"main": "./dist/index.js",
+	"types": "./dist/index.d.ts",
+	"exports": {
+		".": {
+			"types": "./dist/index.d.ts",
+			"import": "./dist/index.js",
+			"default": "./dist/index.js"
+		},
+		"./package.json": "./package.json",
+		"./client": {
+			"default": "./dist/client.js"
+		},
+		"./types": {
+			"types": "./dist/types.d.ts",
+			"import": "./dist/types.js",
+			"default": "./dist/types.js"
+		}
+	},
+	"bin": {
+		"dsh-lens": "./dist/cli.js"
+	},
+	"files": [
+		"dist",
+		"cordis.patch.yml",
+		"README.md",
+		"LICENSE",
+		"NOTICE"
+	],
+	"dsh": {
+		"bundle": {
+			"patch": "./cordis.patch.yml"
+		},
+		"client": {
+			"platform": "web",
+			"immediately": true,
+			"inject": [
+				"@deepseek-ai/dsh-client-locale",
+				"@deepseek-ai/dsh-client-ui-conversation"
+			]
+		}
+	},
+	"scripts": {
+		"build": "tsc -p tsconfig.json && tsc -p tsconfig.client.json && node scripts/bundle-client.mjs",
+		"typecheck": "tsc -p tsconfig.json --noEmit && tsc -p tsconfig.client.json",
+		"format": "biome format --write src scripts package.json tsconfig.json tsconfig.client.json",
+		"format:check": "biome check --linter-enabled=false --assist-enabled=false src scripts package.json tsconfig.json tsconfig.client.json",
+		"test": "npm run build && node --test --test-reporter=spec dist/test/*.test.js",
+		"prepack": "npm run build && node --test --test-reporter=spec dist/test/*.test.js"
+	},
+	"engines": {
+		"node": ">=20"
+	},
+	"keywords": [
+		"dsh",
+		"dsh-plugin",
+		"deepseek-harness",
+		"lsp",
+		"linter",
+		"formatter",
+		"ast-grep",
+		"tree-sitter",
+		"code-quality",
+		"ai",
+		"coding-agent",
+		"webui"
+	],
+	"license": "MIT",
+	"author": "NexusAgentX",
+	"repository": {
+		"type": "git",
+		"url": "git+https://github.com/NexusAgentX/dsh-lens.git"
+	},
+	"bugs": {
+		"url": "https://github.com/NexusAgentX/dsh-lens/issues"
+	},
+	"homepage": "https://github.com/NexusAgentX/dsh-lens#readme",
+	"publishConfig": {
+		"access": "public"
+	},
+	"dependencies": {
+		"pi-lens": "^3.8.74",
+		"zod": "^4.4.3"
+	},
+	"peerDependencies": {
+		"@deepseek-ai/cordis": "^4.0.1",
+		"@deepseek-ai/dsh-agent": ">=0.2.0-0",
+		"@deepseek-ai/dsh-client-ui-primitives": ">=0.2.0-0",
+		"@deepseek-ai/dsh-commands": ">=0.2.0-0",
+		"@deepseek-ai/dsh-llm": ">=0.2.0-0",
+		"@deepseek-ai/dsh-session-projection": ">=0.2.0-0",
+		"@deepseek-ai/dsh-skill": ">=0.2.0-0",
+		"@deepseek-ai/dsh-system-prompt": ">=0.2.0-0",
+		"@deepseek-ai/dsh-tools": ">=0.2.0-0",
+		"@deepseek-ai/schemastery": "^3.18.1"
+	},
+	"peerDependenciesMeta": {
+		"@deepseek-ai/dsh-agent": {
+			"optional": true
+		},
+		"@deepseek-ai/dsh-commands": {
+			"optional": true
+		},
+		"@deepseek-ai/dsh-client-ui-primitives": {
+			"optional": true
+		},
+		"@deepseek-ai/dsh-session-projection": {
+			"optional": true
+		},
+		"@deepseek-ai/dsh-skill": {
+			"optional": true
+		},
+		"@deepseek-ai/dsh-system-prompt": {
+			"optional": true
+		}
+	},
+	"devDependencies": {
+		"@biomejs/biome": "2.5.15",
+		"@deepseek-ai/cordis": "4.0.4",
+		"@deepseek-ai/dsh-agent": "0.2.0-rc.2",
+		"@deepseek-ai/dsh-client-ui-primitives": "0.2.0-rc.2",
+		"@deepseek-ai/dsh-commands": "0.2.0-rc.2",
+		"@deepseek-ai/dsh-llm": "0.2.0-rc.2",
+		"@deepseek-ai/dsh-session-projection": "0.2.0-rc.2",
+		"@deepseek-ai/dsh-skill": "0.2.0-rc.2",
+		"@deepseek-ai/dsh-system-prompt": "0.2.0-rc.2",
+		"@deepseek-ai/dsh-tools": "0.2.0-rc.2",
+		"@deepseek-ai/schemastery": "3.18.4",
+		"@types/node": "^22.15.0",
+		"@types/react": "^18.3.1",
+		"esbuild": "^0.25.0",
+		"react": "^18.2.0",
+		"typescript": "^5.9.3"
+	},
+	"allowScripts": {
+		"@ast-grep/cli@0.45.1": true,
+		"esbuild@0.25.12": true
+	}
 }

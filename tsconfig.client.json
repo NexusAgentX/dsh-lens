@@ -1,0 +1,24 @@
+{
+	"//": "Type gate for the browser half. tsconfig.json excludes src/client/**, so",
+	"//2": "before this file existed a missing @deepseek-ai/dsh-client-ui-primitives",
+	"//3": "export (e.g. IconChevronDownOutline14) shipped as `undefined`, threw during",
+	"//4": "render, and made the whole slot entry abdicate — invisible, with no build error.",
+	"extends": "./tsconfig.json",
+	"compilerOptions": {
+		"noEmit": true,
+		"declaration": false,
+		"lib": ["ES2022", "DOM"],
+		"jsx": "react-jsx",
+		"types": ["react"]
+	},
+	"include": [
+		"src/client/**/*.ts",
+		"src/client/**/*.tsx",
+		"src/lens-status.ts",
+		"src/lens-display.ts"
+	],
+	"exclude": [],
+	"//5": "The single `*.module.css` ambient declaration lives in src/css-modules.d.ts; it is",
+	"//6": "picked up from tsconfig.json's include via this program's file graph, so no copy",
+	"//7": "belongs under src/client/ — a second one only produces TS2300 duplicate identifier."
+}

@@ -1,0 +1,109 @@
+/* Mirrors ui-chat's StatsPills.module.css so the lens pill reads as a peer of
+   the cache-hit / usage pills in the composer usage row. */
+
+.anchor {
+  display: inline-flex;
+  min-width: 0;
+  font-size: calc(var(--dsh-content-font-size-secondary, 13px) - 1px);
+  line-height: calc(20px + var(--dsh-content-font-delta-secondary, 0px));
+}
+
+.pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  box-sizing: border-box;
+  max-width: 100%;
+  padding: 1px 8px;
+  border: none;
+  border-radius: 999px;
+  corner-shape: round;
+  background: transparent;
+  color: var(--dsw-alias-label-tertiary);
+  font: inherit;
+  font-variant-numeric: tabular-nums;
+  line-height: inherit;
+  white-space: nowrap;
+  cursor: pointer;
+}
+
+.pill svg {
+  width: 14px;
+  height: 14px;
+  flex: none;
+}
+
+.pill:hover,
+.pill[aria-expanded='true'] {
+  background: var(--dsw-alias-interactive-bg-hover);
+  color: var(--dsw-alias-label-secondary);
+}
+
+.pill:focus-visible {
+  outline: 2px solid var(--dsw-alias-focus-ring, var(--dsw-alias-label-secondary));
+  outline-offset: 2px;
+}
+
+.pill .caret {
+  width: 12px;
+  height: 12px;
+  transition: transform 120ms ease;
+}
+
+.pill .caretOpen {
+  transform: rotate(180deg);
+}
+
+.label {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.count {
+  font-variant-numeric: tabular-nums;
+}
+
+/* pi-lens tier colours: blocking and errors are failures, warnings and failed
+   language servers are advisory. */
+.blocking,
+.errors {
+  color: var(--dsw-alias-state-error-primary);
+}
+
+.warnings,
+.failed {
+  color: var(--dsw-alias-state-warn-primary);
+}
+
+.ok {
+  color: var(--dsw-alias-state-success-primary);
+}
+
+/* Menu rows, shared with menu-items.tsx. */
+.fileLabel {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+  width: 100%;
+}
+
+.name {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  font-family: var(--dsw-font-mono);
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+
+.kind {
+  flex: none;
+  padding: 0 6px;
+  border-radius: 5px;
+  background: var(--dsw-alias-fill-l2);
+  color: var(--dsw-alias-label-secondary);
+  font-size: 11px;
+  line-height: 18px;
+}
